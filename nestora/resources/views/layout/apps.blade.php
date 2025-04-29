@@ -50,7 +50,7 @@
 
   <main id="main" class="main">
 
-    @yield('konten');
+    @yield('konten')
 
   </main><!-- End #main -->
 

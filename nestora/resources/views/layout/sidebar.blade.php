@@ -3,7 +3,7 @@
     <ul class="sidebar-nav" id="sidebar-nav">
 
       <li class="nav-item">
-        <a class="nav-link " href="index.html">
+        <a class="nav-link " href="dashboard">
           <i class="bi bi-grid"></i>
           <span>Dashboard</span>
         </a>
@@ -93,12 +93,12 @@
         </a>
         <ul id="forms-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
           <li>
-            <a href="forms-elements.html">
+            <a href="{{ route('input-data-master') }}">
               <i class="bi bi-circle"></i><span>Input Data Master</span>
             </a>
           </li>
           <li>
-            <a href="forms-layouts.html">
+            <a href="{{ route('laporan-data-master') }}">
               <i class="bi bi-circle"></i><span>Laporan Data Master</span>
             </a>
           </li>
@@ -153,7 +153,7 @@
               <i class="bi bi-circle"></i><span>ECharts</span>
             </a>
           </li>
-        </ul> --}}
+        </ul> 
       </li><!-- End Charts Nav -->
 
       {{-- <li class="nav-item">
