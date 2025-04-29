@@ -1,65 +1,56 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\DataMasterController;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DataUserController;
+use App\Http\Controllers\PredictionController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group.
-|
 */
 
-// Landing ke Login
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+// Route Dashboard 
+Route::get('/', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
-// Auth routes
-Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('register', function () {
+    return redirect()->route('login');
+})->middleware('guest')->name('register');
 
-// Forgot Password
-Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
-Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+Route::post('register', [RegisteredUserController::class, 'store'])
+    ->middleware('guest');
 
-// Dashboard (butuh login)
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth')->name('dashboard');
+Route::middleware('auth')->group(function () {
+    // Route Profile 
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-// Data Master
-Route::get('/input-data-master', [DataMasterController::class, 'inputDataMaster'])->middleware('auth')->name('input-data-master');
-Route::get('/laporan-data-master', [DataMasterController::class, 'laporanDataMaster'])->middleware('auth')->name('laporan-data-master');
+    // --- ROUTE GET 
 
-// Pengguna
-// Route untuk menampilkan form prediksi, hanya dapat diakses oleh pengguna yang sudah login (auth middleware)
-Route::view('/form-prediksi', 'prediksi.prediksi_baru')->middleware('auth')->name('form-prediksi');
+    // Data Master
+    Route::get('/data-master', [DataMasterController::class, 'index'])
+        ->name('data-master.index');
 
-Route::post('/predict', function (Request $request) {
-    // Ambil data yang diperlukan dari form
-    $data = request()->only(['bathrooms', 'bedrooms', 'furnishing', 'sizeMin']);
+    // Sub-item Data Master
+    Route::get('/data-master/properti', [DataMasterController::class, 'propertiIndex'])
+        ->name('data-master.properti.index');
 
-    // Kirim data ke API Python (Flask atau FastAPI)
-    $response = Http::post('http://localhost:5000/predict', $data);
+    // Data User
+    Route::get('/data-user', [DataUserController::class, 'index'])
+        ->name('data-user.index');
 
-    // Cek apakah prediksi berhasil
-    if ($response->successful()) {
-        return redirect()->route('form-prediksi')->with('prediction_result', $response['prediction_result']);
-    }
+    // Prediksi
+    Route::get('/prediksi/create', [PredictionController::class, 'create'])
+        ->name('prediksi.create');
 
-    // Tampilkan detail error jika prediksi gagal
-    $errorMessage = $response->body(); // Mendapatkan body error
-    return redirect()->route('form-prediksi')->with('error', 'Gagal memproses prediksi. Detail: ' . $errorMessage);
+    Route::post('/prediksi', [PredictionController::class, 'store'])->name('prediksi.store');
 });
 
-
-Route::view('/laporan-prediksi', 'prediksi.laporan_prediksi')->middleware('auth')->name('laporan-prediksi');
-
-
-// Route::get('/pengguna', [PenggunaController::class, 'index'])->middleware('auth')->name('pengguna.index');
+require __DIR__ . '/auth.php';

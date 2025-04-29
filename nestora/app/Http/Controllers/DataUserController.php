@@ -3,18 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User; // 1. Import Model User
 
 class DataUserController extends Controller
 {
-    //
 
-    public function inputDataMaster()
+    public function index()
     {
-        return view('data_user.input-data-master');
-    }
 
-    public function laporanDataMaster()
-    {
-        return view('data_user.laporan-data-master');
+        $users = User::orderBy('name')
+                     ->paginate(10);
+
+        return view('pengguna.index', compact('users'));
     }
 }
