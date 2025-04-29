@@ -38,4 +38,28 @@ Route::get('/input-data-master', [DataMasterController::class, 'inputDataMaster'
 Route::get('/laporan-data-master', [DataMasterController::class, 'laporanDataMaster'])->middleware('auth')->name('laporan-data-master');
 
 // Pengguna
+// Route untuk menampilkan form prediksi, hanya dapat diakses oleh pengguna yang sudah login (auth middleware)
+Route::view('/form-prediksi', 'prediksi.prediksi_baru')->middleware('auth')->name('form-prediksi');
+
+Route::post('/predict', function (Request $request) {
+    // Ambil data yang diperlukan dari form
+    $data = request()->only(['bathrooms', 'bedrooms', 'furnishing', 'sizeMin']);
+
+    // Kirim data ke API Python (Flask atau FastAPI)
+    $response = Http::post('http://localhost:5000/predict', $data);
+
+    // Cek apakah prediksi berhasil
+    if ($response->successful()) {
+        return redirect()->route('form-prediksi')->with('prediction_result', $response['prediction_result']);
+    }
+
+    // Tampilkan detail error jika prediksi gagal
+    $errorMessage = $response->body(); // Mendapatkan body error
+    return redirect()->route('form-prediksi')->with('error', 'Gagal memproses prediksi. Detail: ' . $errorMessage);
+});
+
+
+Route::view('/laporan-prediksi', 'prediksi.laporan_prediksi')->middleware('auth')->name('laporan-prediksi');
+
+
 // Route::get('/pengguna', [PenggunaController::class, 'index'])->middleware('auth')->name('pengguna.index');

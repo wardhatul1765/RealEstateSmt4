@@ -134,9 +134,23 @@
       </li><!-- End Tables Nav -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#charts-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-bar-chart"></i><span>Prediksi</span><i></i>
-        </a>
+  <a class="nav-link collapsed" data-bs-toggle="collapse" href="#prediksi-submenu">
+    <i class="bi bi-bar-chart"></i><span>Prediksi</span><i class="bi bi-chevron-down ms-auto"></i>
+  </a>
+  <ul id="prediksi-submenu" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+    <li>
+      <a href="{{ route('form-prediksi') }}">
+        <i class="bi bi-circle"></i><span>Prediksi Baru</span>
+      </a>
+    </li>
+    <li>
+      <a href="{{ route('laporan-prediksi') }}">
+        <i class="bi bi-circle"></i><span>Laporan Prediksi</span>
+      </a>
+    </li>
+  </ul>
+</li>
+
         {{-- <ul id="charts-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
           <li>
             <a href="charts-chartjs.html">
