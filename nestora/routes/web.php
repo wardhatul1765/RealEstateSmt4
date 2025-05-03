@@ -7,8 +7,7 @@ use App\Http\Controllers\DataMasterController;
 use App\Http\Controllers\DataUserController;
 use App\Http\Controllers\PredictionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
-// Hapus 'use Illuminate\Http\Request;' jika tidak digunakan di route lain
-// Hapus 'use Illuminate\Support\Facades\Http;' jika tidak digunakan di route lain
+use App\Http\Controllers\ManajemenPropertiController; // <-- Pastikan ini ada
 
 /*
 |--------------------------------------------------------------------------
@@ -16,48 +15,64 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 |--------------------------------------------------------------------------
 */
 
-// Route Dashboard
+// --- Auth Routes (Login, Register, dll) ---
 Route::get('/', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-// --- Auth Routes ---
 Route::get('register', function () {
     return redirect()->route('login');
-})->middleware('guest')->name('register'); // Redirect GET /register ke login
+})->middleware('guest')->name('register');
 
 Route::post('register', [RegisteredUserController::class, 'store'])
-    ->middleware('guest'); // POST /register tetap ada
+    ->middleware('guest');
 
-// Route bawaan auth (login, logout, forgot password, dll)
-require __DIR__ . '/auth.php'; // Pastikan file auth.php disertakan
+require __DIR__ . '/auth.php';
 
 // --- Authenticated Routes ---
-Route::middleware('auth')->group(function () {
+Route::middleware('auth')->group(function () { // Sesuaikan middleware jika perlu
+
     // Route Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Data Master
+    //== MANAJEMEN PROPERTI Routes ==
+    Route::prefix('manajemen-properti')->name('manajemen-properti.')->group(function () {
+        Route::get('/', [ManajemenPropertiController::class, 'index'])->name('index');
+        Route::get('/persetujuan', [ManajemenPropertiController::class, 'persetujuan'])->name('persetujuan');
+        Route::get('/create', [ManajemenPropertiController::class, 'create'])->name('create');
+        Route::post('/', [ManajemenPropertiController::class, 'store'])->name('store');
+        Route::get('/{properti}', [ManajemenPropertiController::class, 'show'])->name('show');
+        Route::get('/{properti}/edit', [ManajemenPropertiController::class, 'edit'])->name('edit');
+        Route::match(['put', 'patch'], '/{properti}', [ManajemenPropertiController::class, 'update'])->name('update');
+        Route::delete('/{properti}', [ManajemenPropertiController::class, 'destroy'])->name('destroy');
+        Route::patch('/{properti}/approve', [ManajemenPropertiController::class, 'approve'])->name('approve');
+        Route::patch('/{properti}/reject', [ManajemenPropertiController::class, 'reject'])->name('reject');
+    });
+    //== Akhir MANAJEMEN PROPERTI Routes ==
+
+    // Data Master (Disarankan untuk digrup juga nanti)
     Route::get('/data-master', [DataMasterController::class, 'index'])
         ->name('data-master.index');
     Route::get('/data-master/properti', [DataMasterController::class, 'propertiIndex'])
         ->name('data-master.properti.index');
-    // TODO: Tambahkan route CRUD untuk data master lainnya jika diperlukan
 
     // Data User
-    Route::get('/data-user', [DataUserController::class, 'index'])
-        ->name('data-user.index');
-     // TODO: Tambahkan route CRUD untuk data user jika diperlukan
+    Route::prefix('data-user')->name('data-user.')->group(function () {
+        Route::get('/', [DataUserController::class, 'index'])->name('index');
+        Route::get('/create', [DataUserController::class, 'create'])->name('create');
+        Route::post('/', [DataUserController::class, 'store'])->name('store');
+        Route::get('/{user}/edit', [DataUserController::class, 'edit'])->name('edit');
+        Route::match(['put', 'patch'], '/{user}', [DataUserController::class, 'update'])->name('update');
+        Route::delete('/{user}', [DataUserController::class, 'destroy'])->name('destroy');
+    });
 
     // Prediksi
-    Route::get('/prediksi/create', [PredictionController::class, 'create'])
-        ->name('prediksi.create'); // Menampilkan form
+    Route::prefix('prediksi')->name('prediksi.')->group(function () {
+        Route::get('/create', [PredictionController::class, 'create'])->name('create');
+        Route::post('/', [PredictionController::class, 'store'])->name('store');
+        Route::get('/history', [PredictionController::class, 'history'])->name('history');
+    });
 
-    // Route::post('/prediksi/create', function (Request $request) { ... }); // <-- HAPUS ROUTE CLOSURE INI
-
-    Route::post('/prediksi', [PredictionController::class, 'store'])
-        ->name('prediksi.store'); // Memproses form prediksi
-
-});
+}); // Akhir grup middleware 'auth' 

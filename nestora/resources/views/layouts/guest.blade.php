@@ -22,7 +22,7 @@
                 <a href="/">
                     <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
                 </a>
-            </div> --}}
+            </div> 
 
             {{-- Container utama untuk card dua kolom, dibuat lebih lebar --}}
             <div class="w-full max-w-4xl mt-6">

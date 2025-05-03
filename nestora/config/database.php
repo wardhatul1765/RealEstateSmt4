@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'mysql'),
+    'default' => env('DB_CONNECTION', 'mongodb'), // Menggunakan MySQL sebagai default
 
     /*
     |--------------------------------------------------------------------------
@@ -43,14 +43,14 @@ return [
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],
 
-        'mysql' => [
+        'mysql' => [ // Konfigurasi untuk MySQL (koneksi default)
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'forge'),
-            'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
+            'port' => env('DB_PORT', '3306'), // Port MySQL
+            'database' => env('DB_DATABASE', 'forge'), // Mengambil dari .env
+            'username' => env('DB_USERNAME', 'forge'), // Mengambil dari .env
+            'password' => env('DB_PASSWORD', ''),     // Mengambil dari .env
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
@@ -61,6 +61,18 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
+        ],
+
+        'mongodb' => [ // Konfigurasi untuk MongoDB (YANG BENAR)
+            'driver'   => 'mongodb', // Driver untuk MongoDB
+            'host'     => env('DB_MONGO_HOST', '127.0.0.1'), // Mengambil host dari .env (DB_MONGO_HOST)
+            'port'     => env('DB_MONGO_PORT', 27017),      // Mengambil port dari .env (DB_MONGO_PORT), default 27017
+            'database' => env('DB_MONGO_DATABASE', 'property'), // Mengambil nama DB dari .env (DB_MONGO_DATABASE)
+            'username' => env('DB_MONGO_USERNAME', ''),       // Mengambil username dari .env (DB_MONGO_USERNAME)
+            'password' => env('DB_MONGO_PASSWORD', ''),       // Mengambil password dari .env (DB_MONGO_PASSWORD)
+            'options'  => [
+                'database' => env('DB_MONGO_AUTHENTICATION_DATABASE', 'admin'), // DB untuk autentikasi, ambil dari .env
+            ]
         ],
 
         'pgsql' => [
@@ -92,19 +104,10 @@ return [
             // 'encrypt' => env('DB_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
-        'mongodb' => [
-            'driver'   => 'mongodb',
-            'host'     => env('DB_HOST', '127.0.0.1'),
-            'port'     => env('DB_PORT', 27017),
-            'database' => env('DB_DATABASE'),
-            'username' => env('DB_USERNAME'),
-            'password' => env('DB_PASSWORD'),
-            'options'  => [
-            'database' => env('DB_AUTHENTICATION_DATABASE', 'admin'), // default authentication database
-        ],
-],
 
-    ],
+        // Entri 'mongodb' yang duplikat dan salah sudah dihapus dari sini
+
+    ], 
 
     /*
     |--------------------------------------------------------------------------
