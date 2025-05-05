@@ -7,7 +7,7 @@ use App\Http\Controllers\DataMasterController;
 use App\Http\Controllers\DataUserController;
 use App\Http\Controllers\PredictionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\ManajemenPropertiController; // <-- Pastikan ini ada
+use App\Http\Controllers\ManajemenPropertiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,24 +15,33 @@ use App\Http\Controllers\ManajemenPropertiController; // <-- Pastikan ini ada
 |--------------------------------------------------------------------------
 */
 
+// --- Landing Page Route (Public) ---
+Route::get('/', function () {
+    return view('welcome');
+})->name('landing');
+
 // --- Auth Routes (Login, Register, dll) ---
-Route::get('/', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+// Hapus route register yang redirect ke login jika ingin mengaktifkan registrasi dari landing page
+// Jika tetap ingin registrasi diarahkan ke login, biarkan saja.
+// Route::get('register', function () {
+//     return redirect()->route('login');
+// })->middleware('guest')->name('register');
 
-Route::get('register', function () {
-    return redirect()->route('login');
-})->middleware('guest')->name('register');
+// Route::post('register', [RegisteredUserController::class, 'store'])
+//     ->middleware('guest');
 
-Route::post('register', [RegisteredUserController::class, 'store'])
-    ->middleware('guest');
-
+// Memuat route otentikasi standar (login, logout, password reset, etc.)
 require __DIR__ . '/auth.php';
 
 // --- Authenticated Routes ---
-Route::middleware('auth')->group(function () { // Sesuaikan middleware jika perlu
+Route::middleware('auth')->group(function () {
 
-    // Route Profile
+    // --- Dashboard Route ---
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->middleware('verified')
+        ->name('dashboard');
+
+    // --- Route Profile ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -52,11 +61,13 @@ Route::middleware('auth')->group(function () { // Sesuaikan middleware jika perl
     });
     //== Akhir MANAJEMEN PROPERTI Routes ==
 
-    // Data Master (Disarankan untuk digrup juga nanti)
-    Route::get('/data-master', [DataMasterController::class, 'index'])
-        ->name('data-master.index');
-    Route::get('/data-master/properti', [DataMasterController::class, 'propertiIndex'])
-        ->name('data-master.properti.index');
+    // Data Master
+    Route::prefix('data-master')->name('data-master.')->group(function () {
+        Route::get('/', [DataMasterController::class, 'index'])->name('index'); // Contoh route, sesuaikan
+        Route::get('/properti', [DataMasterController::class, 'propertiIndex'])->name('properti.index');
+        // Tambahkan route data master lainnya di sini (kategori, lokasi, dll)
+    });
+
 
     // Data User
     Route::prefix('data-user')->name('data-user.')->group(function () {
@@ -75,4 +86,4 @@ Route::middleware('auth')->group(function () { // Sesuaikan middleware jika perl
         Route::get('/history', [PredictionController::class, 'history'])->name('history');
     });
 
-}); // Akhir grup middleware 'auth' 
+});
