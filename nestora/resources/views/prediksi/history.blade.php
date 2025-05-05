@@ -68,21 +68,21 @@
                                     <td class="py-3 px-6">
                                         Bath: {{ $prediksi->bathrooms ?? 'N/A' }},
                                         Bed: {{ $prediksi->bedrooms ?? 'N/A' }},
-                                        Size: {{ $prediksi->sizeMin ?? 'N/A' }}sqft,
+                                        Size: {{ $prediksi->sizeMin ?? 'N/A' }} m², {{-- Ubah sqft ke m² jika data sudah dikonversi --}}
                                         Furn: {{ isset($prediksi->furnishing) && $prediksi->furnishing == 1 ? 'Yes' : 'No' }},
                                         Verif: {{ isset($prediksi->verified) && $prediksi->verified == 1 ? 'Yes' : 'No' }}
-                                        {{-- Tambahkan field input lain jika ada: view_type, listing_age_category, title_keyword --}}
-                                        {{-- , VT: {{ $prediksi->view_type ?? 'N/A' }}, LA: {{ $prediksi->listing_age_category ?? 'N/A' }}, TK: {{ $prediksi->title_keyword ?? 'N/A' }} --}}
+                                        {{-- Contoh Tambahan (jika data ada): --}}
+                                        {{-- , View: {{ $prediksi->view_type ?? 'N/A' }}, Age: {{ $prediksi->listing_age_category ?? 'N/A' }}, Key: {{ $prediksi->title_keyword ?? 'N/A' }} --}}
                                     </td>
 
-                                    {{-- Menampilkan hasil prediksi IDR --}}
+                                    {{-- Menampilkan hasil prediksi IDR dengan Prefix "Rp." --}}
                                     <td class="py-3 px-6 text-right">
-                                        {{ number_format($prediksi->hasil_prediksi_idr ?? 0, 0, ',', '.') }}
+                                        Rp. {{ number_format($prediksi->hasil_prediksi_idr ?? 0, 0, ',', '.') }}
                                     </td>
 
-                                    {{-- Menampilkan hasil prediksi AED --}}
+                                    {{-- Menampilkan hasil prediksi AED dengan Prefix "AED" --}}
                                     <td class="py-3 px-6 text-right">
-                                        {{ number_format($prediksi->hasil_prediksi_aed ?? 0, 2, ',', '.') }}
+                                        AED {{ number_format($prediksi->hasil_prediksi_aed ?? 0, 2, ',', '.') }}
                                     </td>
                                 </tr>
                                 @empty
