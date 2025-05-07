@@ -38,7 +38,7 @@ class User extends Model implements
     protected $connection = 'mongodb';
 
     // Tentukan nama collection (setara tabel)
-    protected $collection = 'users'; // Pastikan nama collection sesuai
+    protected $collection = 'admin'; // Pastikan nama collection sesuai
 
     /**
      * The attributes that are mass assignable.
@@ -50,7 +50,9 @@ class User extends Model implements
         'name',
         'email',
         'password',
-        // 'email_verified_at', // Tambahkan jika Anda menggunakannya
+        'phone',
+        'role',
+        'profile_image', // Tambahkan ini
     ];
 
     /**
