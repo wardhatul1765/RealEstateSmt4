@@ -23,14 +23,14 @@ use Laravel\Sanctum\HasApiTokens;
 // Jika pakai Spatie Roles/Permissions: use Spatie\Permission\Traits\HasRoles;
 
 // Implementasikan Contract Authenticatable DAN CanResetPassword
-class User extends Model implements
+class Admin extends Model implements // <-- UBAH NAMA KELAS MENJADI Admin
     AuthenticatableContract,
-    CanResetPasswordContract // <-- TAMBAHKAN INI
+    CanResetPasswordContract
     // , MustVerifyEmail // Aktifkan jika perlu
 {
     // Gunakan trait-trait standar Laravel, TERMASUK Authenticatable DAN CanResetPassword
     use HasApiTokens, HasFactory, Notifiable, Authenticatable,
-        CanResetPassword; // <-- TAMBAHKAN INI
+        CanResetPassword;
 
     // Jika pakai Spatie Roles/Permissions, tambahkan: , HasRoles;
 
@@ -38,7 +38,7 @@ class User extends Model implements
     protected $connection = 'mongodb';
 
     // Tentukan nama collection (setara tabel)
-    protected $collection = 'users'; // Pastikan nama collection sesuai
+    protected $collection = 'admins'; // <-- UBAH NAMA COLLECTION MENJADI 'admins' (atau sesuai kebutuhan)
 
     /**
      * The attributes that are mass assignable.
@@ -50,8 +50,8 @@ class User extends Model implements
         'name',
         'email',
         'password',
-        'phone',
-        'profile_image', // Tambahkan ini
+        // 'email_verified_at', // Tambahkan jika Anda menggunakannya
+        // Tambahkan atribut khusus admin jika ada, contoh: 'role', 'permissions'
     ];
 
     /**
@@ -78,9 +78,11 @@ class User extends Model implements
     ];
 
     // Jika Anda menggunakan Spatie Roles/Permissions, pastikan guardName diset jika perlu
-    // protected $guard_name = 'web';
+    // protected $guard_name = 'admin'; // Pertimbangkan guard yang berbeda untuk admin
 
     // Metode dari CanResetPassword trait biasanya tidak perlu di-override
     // seperti getEmailForPasswordReset() dan sendPasswordResetNotification()
     // kecuali Anda perlu kustomisasi khusus.
+
+    // Anda mungkin ingin menambahkan relasi atau metode khusus untuk Admin di sini
 }
