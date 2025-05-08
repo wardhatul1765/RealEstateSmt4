@@ -61,12 +61,15 @@ Route::middleware('auth')->group(function () {
     });
     //== Akhir MANAJEMEN PROPERTI Routes ==
 
-    // Data Master
-    Route::prefix('data-master')->name('data-master.')->group(function () {
-        Route::get('/', [DataMasterController::class, 'index'])->name('index'); // Contoh route, sesuaikan
-        Route::get('/properti', [DataMasterController::class, 'propertiIndex'])->name('properti.index');
-        // Tambahkan route data master lainnya di sini (kategori, lokasi, dll)
+    Route::prefix('data-master/properti')->name('data-master.properti.')->group(function () {
+        Route::get('/', [DataMasterController::class, 'propertiIndex'])->name('index');
+        Route::get('/create', [DataMasterController::class, 'create'])->name('create');
+        Route::post('/', [DataMasterController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [DataMasterController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [DataMasterController::class, 'update'])->name('update');
+        Route::delete('/{id}', [DataMasterController::class, 'destroy'])->name('destroy');
     });
+    
 
 
     // Data User
@@ -85,5 +88,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [PredictionController::class, 'store'])->name('store');
         Route::get('/history', [PredictionController::class, 'history'])->name('history');
     });
+
+    
 
 });
