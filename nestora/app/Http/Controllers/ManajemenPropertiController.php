@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\Response; // Tambahkan ini jika ingin return response sederhana
+use Illuminate\Http\Response;
+use App\Models\Property;
+ // Tambahkan ini jika ingin return response sederhana
 
 class ManajemenPropertiController extends Controller
 {
@@ -13,8 +15,10 @@ class ManajemenPropertiController extends Controller
      */
     public function index()
     {
+
+        $dataProperty = Property::latest()->paginate(15);
         // Kosongkan dulu atau beri placeholder
-        return view('manajemen-properti.index');
+        return view('manajemen-properti.index',compact('dataProperty'));
         // return response("Halaman Daftar Properti (Admin)"); // Placeholder
     }
 

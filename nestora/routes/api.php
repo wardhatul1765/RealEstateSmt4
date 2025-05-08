@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\APIAuthController;
+use App\Http\Controllers\PredictionController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -22,3 +24,5 @@ Route::post('/login', [APIAuthController::class, 'apiLogin']);
 
 // routes/api.php
 Route::post('/register', [APIAuthController::class, 'apiRegister']);
+
+Route::middleware('auth:sanctum')->post('/predict-price', [PredictionController::class, 'predictPrice']);

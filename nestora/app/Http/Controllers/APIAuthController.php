@@ -12,7 +12,6 @@ use Illuminate\Support\Str;
 
 class APIAuthController extends Controller
 {
-//MOBILE
     public function apiLogin(Request $request)
     {
         $credentials = $request->only('email', 'password');
