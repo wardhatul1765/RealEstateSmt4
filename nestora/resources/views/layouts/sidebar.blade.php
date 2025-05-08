@@ -54,7 +54,7 @@
                     <ul x-show="manajemenPropertiOpen" x-transition class="mt-1 ml-4 space-y-1 border-l-2 border-gray-200 dark:border-gray-700 pl-2 hidden md:block">
                         <li><a href="{{ route('manajemen-properti.index') }}" class="block px-3 py-1 rounded-md text-sm {{ request()->routeIs('manajemen-properti.index') ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700' }}">Daftar Properti</a></li>
                         <li><a href="{{ route('manajemen-properti.persetujuan') }}" class="block px-3 py-1 rounded-md text-sm {{ request()->routeIs('manajemen-properti.persetujuan') ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700' }}">Persetujuan Iklan</a></li>
-                        <li><a href="{{ route('manajemen-properti.create') }}" class="block px-3 py-1 rounded-md text-sm {{ request()->routeIs('manajemen-properti.create') ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700' }}">Tambah Properti</a></li>
+                        <!-- <li><a href="{{ route('manajemen-properti.create') }}" class="block px-3 py-1 rounded-md text-sm {{ request()->routeIs('manajemen-properti.create') ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700' }}">Tambah Properti</a></li> -->
                     </ul>
                  </li>
 
@@ -72,10 +72,10 @@
                     </button>
                     <ul x-show="dataMasterOpen" x-transition class="mt-1 ml-4 space-y-1 border-l-2 border-gray-200 dark:border-gray-700 pl-2 hidden md:block">
                         <li><a href="{{ route('data-master.properti.index') }}" class="block px-3 py-1 rounded-md text-sm {{ request()->routeIs('data-master.properti.*') ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700' }}">Master Properti</a></li>
-                        <li><a href="#" class="block px-3 py-1 rounded-md text-sm {{ request()->routeIs('data-master.kategori.*') ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700' }}">Kategori Properti</a></li>
+                        <!-- <li><a href="#" class="block px-3 py-1 rounded-md text-sm {{ request()->routeIs('data-master.kategori.*') ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700' }}">Kategori Properti</a></li>
                         <li><a href="#" class="block px-3 py-1 rounded-md text-sm {{ request()->routeIs('data-master.lokasi.*') ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700' }}">Lokasi</a></li>
                         <li><a href="#" class="block px-3 py-1 rounded-md text-sm {{ request()->routeIs('data-master.fasilitas.*') ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700' }}">Fasilitas Properti</a></li>
-                        <li><a href="#" class="block px-3 py-1 rounded-md text-sm {{ request()->routeIs('data-master.status.*') ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700' }}">Status Properti</a></li>
+                        <li><a href="#" class="block px-3 py-1 rounded-md text-sm {{ request()->routeIs('data-master.status.*') ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700' }}">Status Properti</a></li> -->
                     </ul>
                 </li>
 

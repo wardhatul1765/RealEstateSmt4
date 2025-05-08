@@ -10,12 +10,11 @@ class Property extends Model
     use HasFactory; // Opsional, tambahkan jika pakai factory
 
     protected $connection = 'mongodb';
-    protected $collection = 'property'; // Pastikan ini sama dengan nama collectionmu
+    protected $collection = 'properties'; // Pastikan ini sama dengan nama collectionmu
 
     public $timestamps = false; // <-- SANGAT PENTING
 
     protected $fillable = [
-        '_id', // Jika _id juga bagian dari data JSON yang diimpor dan mau di-manage Eloquent
         'bathrooms',
         'bedrooms',
         'type',
@@ -24,42 +23,20 @@ class Property extends Model
         'sizeMin',
         'verified',
         'title',
+        'displayAddress',
         'addedOn',
         'view_type',
         'keyword_flags',
     ];
 
     protected $casts = [
-        'price' => 'integer',
-        'bathrooms' => 'integer',
-        'bedrooms' => 'integer',
-        'sizeMin' => 'float', // Atau integer
-        'verified' => 'boolean', // JSON-mu sudah boolean (true/false), jadi ini akan bekerja
-        'addedOn' => 'datetime', // JSON-mu string ISO8601, ini akan di-cast ke Carbon
-        // 'furnishing' perlu penanganan khusus jika masih "YES"/"NO" di JSON dan mau jadi boolean
-        // Jika sudah boolean di JSON, maka 'furnishing' => 'boolean' cukup.
-        // Jika masih string "YES"/"NO" di JSON dan DB juga string: tidak perlu cast.
-        // Jika masih string "YES"/"NO" di JSON tapi mau boolean di Eloquent: gunakan accessor.
-        'keyword_flags' => 'array', // Jika ini adalah array
+        'price' => 'integer',             // Data: 2500000 (integer) -> OK
+        'bathrooms' => 'integer',         // Data: 3.0 (float) -> OK, PHP akan handle jadi 3
+        'bedrooms' => 'integer',          // Data: 2.0 (float) -> OK, PHP akan handle jadi 2
+        'sizeMin' => 'float',             // Data: 1323 (integer) -> OK, bisa di-cast ke float
+        'verified' => 'boolean',          // Data: True (boolean Python) -> OK, MongoDB boolean
+        'addedOn' => 'datetime',          // Data: "2024-08-14T12:02:53Z" (ISO 8601 string) -> OK, Carbon bisa parse
+        'keyword_flags' => 'array',       // Data: None (null di MongoDB) atau ["spacious"] (array) -> OK
     ];
 
-    // Jika 'furnishing' di JSON masih "YES"/"NO" dan kamu mau jadi boolean di Laravel:
-    public function getFurnishingAttribute($value)
-    {
-        if (is_string($value)) {
-            return strtoupper($value) === 'YES';
-        }
-        return (bool) $value; // fallback jika sudah boolean atau tipe lain
-    }
-
-    // Jika kamu ingin menyimpan 'furnishing' sebagai boolean di DB
-    // tapi menerima input "YES"/"NO" dari form, kamu bisa pakai mutator:
-    // public function setFurnishingAttribute($value)
-    // {
-    //     if (is_string($value)) {
-    //         $this->attributes['furnishing'] = (strtoupper($value) === 'YES');
-    //     } else {
-    //         $this->attributes['furnishing'] = (bool) $value;
-    //     }
-    // }
 }

@@ -13,13 +13,46 @@ class ManajemenPropertiController extends Controller
      * Menampilkan halaman daftar properti (untuk admin).
      * Route: manajemen-properti.index
      */
-    public function index()
+    public function index(Request $request)
     {
+        $searchTerm = $request->input('search');
 
-        $dataProperty = Property::latest()->paginate(15);
-        // Kosongkan dulu atau beri placeholder
-        return view('manajemen-properti.index',compact('dataProperty'));
-        // return response("Halaman Daftar Properti (Admin)"); // Placeholder
+        // Memulai query
+        $query = Property::query();
+
+        // Jika ada input pencarian, tambahkan kondisi where
+        if ($searchTerm) {
+            // Menggunakan preg_quote untuk escape karakter spesial regex
+            $escapedSearchTerm = preg_quote($searchTerm, '/');
+
+            $query->where(function ($q) use ($escapedSearchTerm, $searchTerm) {
+                // Pencarian untuk field teks
+                $q->where('title', 'regexp', "/.*{$escapedSearchTerm}.*/i") // 'i' untuk case-insensitive
+                  ->orWhere('displayAddress', 'regexp', "/.*{$escapedSearchTerm}.*/i")
+                  ->orWhere('type', 'regexp', "/.*{$escapedSearchTerm}.*/i")
+                  ->orWhere('description', 'regexp', "/.*{$escapedSearchTerm}.*/i") // Tetap mencari di deskripsi
+                  ->orWhere('view_type', 'regexp', "/.*{$escapedSearchTerm}.*/i")
+                  ->orWhere('furnishing', 'regexp', "/.*{$escapedSearchTerm}.*/i"); // Mencari berdasarkan furnishing (misal "YES" atau "NO")
+
+                // Jika searchTerm adalah numerik, coba cari juga di field numerik untuk kecocokan persis
+                if (is_numeric($searchTerm)) {
+                    $numericSearchTerm = (float) $searchTerm; // Konversi ke float untuk konsistensi
+                    $q->orWhere('bedrooms', $numericSearchTerm)
+                      ->orWhere('bathrooms', $numericSearchTerm)
+                      ->orWhere('price', $numericSearchTerm)
+                      ->orWhere('sizeMin', $numericSearchTerm);
+                }
+                // Catatan: Pencarian pada field tanggal (addedOn) biasanya memerlukan UI dan logika khusus (misal, date range picker)
+                // dan tidak ideal untuk pencarian teks umum seperti ini.
+                // Field 'No' (nomor urut) adalah untuk tampilan dan tidak dicari di database.
+            });
+        }
+
+        // Mengurutkan berdasarkan yang terbaru dan melakukan paginasi
+        // Penting: appends(request()->query()) agar parameter pencarian tetap ada di link pagination
+        $dataProperty = $query->latest('addedOn')->paginate(15)->appends(request()->query());
+
+        return view('manajemen-properti.index', compact('dataProperty', 'searchTerm'));
     }
 
     /**
