@@ -11,9 +11,19 @@ class DataMasterController extends Controller
      * Menampilkan halaman daftar master properti.
      * Route: data-master.properti.index
      */
-    public function propertiIndex()
+    public function propertiIndex(Request $request)
     {
-        $dataProperty = Property::latest()->paginate(15);
+        $query = Property::latest('addedOn'); // Urutkan berdasarkan tanggal terbaru
+
+        // Pencarian berdasarkan judul atau alamat
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('displayAddress', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $dataProperty = $query->paginate(15);
         return view('data_master.index', compact('dataProperty'));
     }
 
@@ -35,11 +45,18 @@ class DataMasterController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'displayAddress' => 'required|string',
-            'bedrooms' => 'required|integer',
-            'bathrooms' => 'required|integer',
-            'price' => 'required|integer',
+            'bedrooms' => 'required|integer|min:0',
+            'bathrooms' => 'required|integer|min:0',
+            'price' => 'required|integer|min:0',
+            'sizeMin' => 'nullable|integer|min:0',
             'type' => 'required|string',
+            'furnishing' => 'required|string|in:Yes,No',
+            'verified' => 'boolean',
         ]);
+
+        // Set nilai default
+        $validated['verified'] = $request->has('verified');
+        $validated['addedOn'] = now();
 
         Property::create($validated);
 
@@ -66,11 +83,17 @@ class DataMasterController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'displayAddress' => 'required|string',
-            'bedrooms' => 'required|integer',
-            'bathrooms' => 'required|integer',
-            'price' => 'required|integer',
+            'bedrooms' => 'required|integer|min:0',
+            'bathrooms' => 'required|integer|min:0',
+            'price' => 'required|integer|min:0',
+            'sizeMin' => 'nullable|integer|min:0',
             'type' => 'required|string',
+            'furnishing' => 'required|string|in:Yes,No',
+            'verified' => 'boolean',
         ]);
+
+        // Set nilai default
+        $validated['verified'] = $request->has('verified');
 
         $property = Property::findOrFail($id);
         $property->update($validated);
