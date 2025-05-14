@@ -83,17 +83,15 @@ Route::middleware('auth')->group(function () {
     });
 
     // Prediksi
-// Route publik (jika ada) di dalam prefix 'prediksi'
-Route::prefix('prediksi')->name('prediksi.')->group(function () {
-    // Contoh: Route::get('/public-info', [PredictionController::class, 'publicInfo'])->name('public-info');
-    Route::get('/history', [PredictionController::class, 'history'])->name('history'); // Jika history boleh publik
-});
+    Route::prefix('prediksi')->name('prediksi.')->group(function () {
+        Route::get('/create', [PredictionController::class, 'create'])->name('create');
+        Route::post('/', [PredictionController::class, 'store'])->name('store');
+        Route::get('/history', [PredictionController::class, 'history'])->name('history');
+    });
 
-// Route yang butuh autentikasi di dalam prefix 'prediksi'
-Route::middleware(['auth'])->prefix('prediksi')->name('prediksi.')->group(function () {
-    Route::get('/create', [PredictionController::class, 'create'])->name('create'); // Nama akan jadi 'prediksi.create'
-    Route::post('/', [PredictionController::class, 'store'])->name('store');       // Nama akan jadi 'prediksi.store'
-});
+
+
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 
     
 

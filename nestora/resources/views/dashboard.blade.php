@@ -1,74 +1,77 @@
 <x-app-layout>
-    {{-- Header (Opsional, bisa dihapus jika tidak perlu judul khusus di sini) --}}
-    {{-- <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dashboard') }}
-        </h2>
-    </x-slot> --}}
-
     <div class="space-y-6">
         {{-- Summary Cards --}}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {{-- Card 1: Jumlah Properti Terdaftar --}}
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-md rounded-lg p-5">
-                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Jumlah Properti Terdaftar</h3>
-                <div class="mt-1 text-3xl font-semibold text-gray-900 dark:text-white">100</div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Unit</p>
-            </div>
-
-            {{-- Card 2: Jumlah Kunjungan Properti --}}
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-md rounded-lg p-5">
-                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Jumlah Kunjungan Properti</h3>
-                <div class="mt-1 text-3xl font-semibold text-gray-900 dark:text-white">3000</div>
-                 <p class="text-sm text-gray-500 dark:text-gray-400">Views</p>
-            </div>
-
-            {{-- Card 3: Properti Terjual Bulan Ini --}}
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-md rounded-lg p-5">
-                 <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Properti Terjual Bulan Ini</h3>
-                <div class="mt-1 text-3xl font-semibold text-gray-900 dark:text-white">85</div>
-                 <p class="text-sm text-gray-500 dark:text-gray-400">Unit</p>
-            </div>
-
-             {{-- Card 4: Agen Aktif --}}
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-md rounded-lg p-5">
-                 <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Agen Aktif</h3>
-                <div class="mt-1 text-3xl font-semibold text-gray-900 dark:text-white">3</div>
-                 <p class="text-sm text-gray-500 dark:text-gray-400">Agen</p>
-            </div>
+            {{-- Contoh Card --}}
+            <x-dashboard.card title="Jumlah Properti Terdaftar" value="{{ $totalProperties }}" unit="Unit" />
+            <x-dashboard.card title="Jumlah Kunjungan Properti" value="{{ $totalViews }}" unit="Views" />
+            <x-dashboard.card title="Properti Terjual Bulan Ini" value="{{ $soldThisMonth }}" unit="Unit" />
+            <x-dashboard.card title="Agen Aktif" value="{{ $activeAgents }}" unit="Agen" />
         </div>
 
         {{-- Charts --}}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {{-- Chart Penjualan Per-Bulan --}}
-            <div class="bg-white dark:bg-white overflow-hidden shadow-md rounded-lg p-5">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-900 mb-4">Penjualan Per-Bulan</h3>
-                {{-- Placeholder untuk chart --}}
-                <div class="h-64 bg-gray-200 dark:bg-gray-300 rounded flex items-center justify-center">
-                    <span class="text-gray-500">Chart Penjualan (Bar)</span>
-                </div>
+            {{-- Bar Chart --}}
+            <x-dashboard.chart title="Penjualan Per-Bulan">
+                <canvas id="salesChart" class="h-64"></canvas>
+            </x-dashboard.chart>
+
+            <div class="space-y-6">
+                {{-- Pie Chart --}}
+                <x-dashboard.chart title="Properti Terjual Per-Area">
+                    <canvas id="soldPropertyChart" class="h-48"></canvas>
+                </x-dashboard.chart>
+
+                {{-- Line Chart --}}
+                <x-dashboard.chart title="Tren Pengunjung Website">
+                    <canvas id="visitorChart" class="h-48"></canvas>
+                </x-dashboard.chart>
             </div>
-
-            {{-- Container untuk dua chart bawah --}}
-             <div class="space-y-6">
-                 {{-- Chart Properti Terjual (Pie) --}}
-                <div class="bg-white dark:bg-white overflow-hidden shadow-md rounded-lg p-5">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-900 mb-4">Properti Terjual</h3>
-                    {{-- Placeholder untuk chart --}}
-                    <div class="h-48 bg-gray-200 dark:bg-gray-300 rounded flex items-center justify-center">
-                        <span class="text-gray-500">Chart Properti (Pie)</span>
-                    </div>
-                </div>
-
-                 {{-- Chart Tren Pengunjung Website (Line) --}}
-                 <div class="bg-white dark:bg-white overflow-hidden shadow-md rounded-lg p-5">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-900 mb-4">Tren Pengunjung Website</h3>
-                    {{-- Placeholder untuk chart --}}
-                    <div class="h-48 bg-gray-200 dark:bg-gray-300 rounded flex items-center justify-center">
-                         <span class="text-gray-500">Chart Pengunjung (Line)</span>
-                    </div>
-                </div>
-             </div>
         </div>
     </div>
+
+    {{-- Script --}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        const visitorCtx = document.getElementById('visitorChart').getContext('2d');
+        const soldCtx = document.getElementById('soldPropertyChart').getContext('2d');
+
+        new Chart(salesCtx, {
+            type: 'bar',
+            data: {
+                labels: {!! json_encode($salesPerMonth['labels']) !!},
+                datasets: [{
+                    label: 'Jumlah Terjual',
+                    data: {!! json_encode($salesPerMonth['data']) !!},
+                    backgroundColor: '#3b82f6',
+                }]
+            }
+        });
+
+        new Chart(visitorCtx, {
+            type: 'line',
+            data: {
+                labels: {!! json_encode($visitors['labels']) !!},
+                datasets: [{
+                    label: 'Pengunjung',
+                    data: {!! json_encode($visitors['data']) !!},
+                    borderColor: '#10b981',
+                    fill: false
+                }]
+            }
+        });
+
+        new Chart(soldCtx, {
+            type: 'pie',
+            data: {
+                labels: {!! json_encode($soldDistribution['labels']) !!},
+                datasets: [{
+                    data: {!! json_encode($soldDistribution['data']) !!},
+                    backgroundColor: ['#f59e0b', '#3b82f6', '#ef4444', '#10b981'],
+                }]
+            }
+        });
+    </script>
 </x-app-layout>
+dashboard
