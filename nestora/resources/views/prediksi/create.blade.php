@@ -100,14 +100,21 @@
                                 <x-input-error :messages="$errors->get('view_type')" class="mt-2" />
                             </div>
 
-                            {{-- Input Listing Age Category --}}
+                           {{-- Input Listing Age Category (Dropdown) --}}
                             <div>
-                                <x-input-label for="listing_age_category" :value="__('Kategori Usia Listing (Kode)')"
-                                    class="mb-1" />
-                                <x-text-input id="listing_age_category"
-                                    class="block w-full focus:border-nestora-lime focus:ring-nestora-lime dark:bg-gray-700 dark:border-gray-600"
-                                    type="number" name="listing_age_category" :value="old('listing_age_category')"
-                                    required placeholder="Kode numerik" />
+                                <x-input-label for="listing_age_category" :value="__('Kategori Usia Listing')" class="mb-1" />
+                                <select id="listing_age_category" name="listing_age_category" required
+                                        class="block w-full border-gray-300 focus:border-nestora-lime focus:ring-nestora-lime rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                                    <option value="" disabled {{ old('listing_age_category') === null ? 'selected' : '' }}>Pilih Kategori Usia...</option>
+                                    {{--
+                                        Sesuaikan 'value' di bawah ini (0, 1, 2)
+                                        agar cocok dengan encoding numerik yang diharapkan backend Anda
+                                        untuk 'baru', 'cukup_lama', dan 'lama'.
+                                    --}}
+                                    <option value="0" {{ old('listing_age_category') == '0' ? 'selected' : '' }}>Baru (Kurang dari 3 bulan)</option>
+                                    <option value="1" {{ old('listing_age_category') == '1' ? 'selected' : '' }}>Cukup Lama (3-6 bulan)</option>
+                                    <option value="2" {{ old('listing_age_category') == '2' ? 'selected' : '' }}>Lama (Lebih dari 6 bulan)</option>
+                                </select>
                                 <x-input-error :messages="$errors->get('listing_age_category')" class="mt-2" />
                             </div>
 

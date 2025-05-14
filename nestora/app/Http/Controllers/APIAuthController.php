@@ -14,20 +14,23 @@ class APIAuthController extends Controller
 {
     public function apiLogin(Request $request)
     {
-        $credentials = $request->only('email', 'password');
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
+        $user = User::where('email', $request->email)->first();
 
+        if ($user && Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => true,
                 'message' => 'Login berhasil',
                 'data' => [
-                    'id' => $user->id,
+                    'id' => $user->_id, // MongoDB uses _id
                     'name' => $user->name,
                     'email' => $user->email,
                     'phone' => $user->phone,
-                    'profile_image' => $user->profile_image,
+                    'profile_image' => $user->profile_image ?? '',
                 ],
             ]);
         }
