@@ -6,7 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataMasterController;
 use App\Http\Controllers\DataUserController;
 use App\Http\Controllers\PredictionController;
-use App\Http\Controllers\Auth\RegisteredUserController;
+// use App\Http\Controllers\Auth\RegisteredUserController; // Jika tidak digunakan, bisa dikomentari
 use App\Http\Controllers\ManajemenPropertiController;
 
 /*
@@ -21,24 +21,16 @@ Route::get('/', function () {
 })->name('landing');
 
 // --- Auth Routes (Login, Register, dll) ---
-// Hapus route register yang redirect ke login jika ingin mengaktifkan registrasi dari landing page
-// Jika tetap ingin registrasi diarahkan ke login, biarkan saja.
-// Route::get('register', function () {
-//     return redirect()->route('login');
-// })->middleware('guest')->name('register');
-
-// Route::post('register', [RegisteredUserController::class, 'store'])
-//     ->middleware('guest');
-
-// Memuat route otentikasi standar (login, logout, password reset, etc.)
 require __DIR__ . '/auth.php';
 
+
 // --- Authenticated Routes ---
-Route::middleware('auth')->group(function () {
+// Pastikan middleware 'auth' dan 'verified' (jika perlu) diterapkan dengan benar
+Route::middleware(['auth', 'verified'])->group(function () { // Menambahkan 'verified' di sini jika semua rute di dalamnya memerlukannya
 
     // --- Dashboard Route ---
     Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->middleware('verified')
+        // ->middleware('verified') // Sudah ada di group middleware di atas
         ->name('dashboard');
 
     // --- Route Profile ---
@@ -61,15 +53,22 @@ Route::middleware('auth')->group(function () {
     });
     //== Akhir MANAJEMEN PROPERTI Routes ==
 
-    Route::prefix('data-master/properti')->name('data-master.properti.')->group(function () {
+    //== DATA MASTER PROPERTI Routes (Disesuaikan untuk Modal) ==
+        Route::prefix('data-master/properti')->name('data-master.properti.')->group(function () {
         Route::get('/', [DataMasterController::class, 'propertiIndex'])->name('index');
-        Route::get('/create', [DataMasterController::class, 'create'])->name('create');
+        Route::get('/{id}/edit-data', [DataMasterController::class, 'getPropertyEditData'])->name('edit-data');
+        // Route untuk mengambil data JSON untuk modal edit
+        // Route::get('/{id}/edit-data', [DataMasterController::class, 'getPropertyEditData'])->name('edit-data');
+        // Route store dan update akan menangani AJAX dari modal
         Route::post('/', [DataMasterController::class, 'store'])->name('store');
-        Route::get('/{id}/edit', [DataMasterController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [DataMasterController::class, 'update'])->name('update');
+        Route::put('/{id}', [DataMasterController::class, 'update'])->name('update'); // Menggunakan PUT untuk update
         Route::delete('/{id}', [DataMasterController::class, 'destroy'])->name('destroy');
+
+        // Komentari atau hapus route create dan edit halaman penuh jika sudah tidak digunakan
+        // Route::get('/create', [DataMasterController::class, 'create'])->name('create');
+        // Route::get('/{id}/edit', [DataMasterController::class, 'edit'])->name('edit');
     });
-    
+    //== Akhir DATA MASTER PROPERTI Routes ==
 
 
     // Data User
@@ -89,10 +88,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/history', [PredictionController::class, 'history'])->name('history');
     });
 
-
-
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
-
-    
+    // Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard'); // Duplikat, sudah ada di atas
 
 });

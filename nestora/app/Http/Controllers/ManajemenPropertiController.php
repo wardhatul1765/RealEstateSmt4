@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Persetujuan;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\Property;
@@ -60,11 +61,13 @@ class ManajemenPropertiController extends Controller
      * Route: manajemen-properti.persetujuan
      */
     public function persetujuan()
-    {
-        // Kosongkan dulu atau beri placeholder
-        return view('manajemen-properti.persetujuan');
-        // return response("Halaman Persetujuan Iklan Properti"); // Placeholder
-    }
+{
+    $properties = Persetujuan::where('verified', false)->paginate(10);
+
+
+    return view('manajemen-properti.persetujuan', compact('properties'));
+}
+
 
     /**
      * Menampilkan form untuk menambah properti baru.
@@ -145,20 +148,21 @@ class ManajemenPropertiController extends Controller
      /**
      * Mengubah status persetujuan properti (Contoh action tambahan).
      */
-    public function approve(Request $request, $properti)
-    {
-        // Kosongkan dulu
-        return redirect()->route('manajemen-properti.persetujuan')->with('info', 'Fungsi Approve belum diimplementasikan.');
-        //  return response("Proses Approve Properti ID: " . $properti . " (Belum Implementasi)"); // Placeholder
-    }
+    public function approve($id)
+{
+    $property = Property::findOrFail($id);
+    $property->status = 'approved';
+    $property->save();
 
-    /**
-     * Mengubah status penolakan properti (Contoh action tambahan).
-     */
-    public function reject(Request $request, $properti)
-    {
-        // Kosongkan dulu
-        return redirect()->route('manajemen-properti.persetujuan')->with('info', 'Fungsi Reject belum diimplementasikan.');
-        // return response("Proses Reject Properti ID: " . $properti . " (Belum Implementasi)"); // Placeholder
-    }
+    return redirect()->route('manajemen-properti.persetujuan')->with('success', 'Iklan berhasil disetujui.');
+}
+
+public function reject($id)
+{
+    $property = Property::findOrFail($id);
+    $property->status = 'rejected';
+    $property->save();
+
+    return redirect()->route('manajemen-properti.persetujuan')->with('success', 'Iklan berhasil ditolak.');
+}
 }

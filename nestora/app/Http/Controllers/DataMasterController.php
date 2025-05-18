@@ -51,17 +51,33 @@ class DataMasterController extends Controller
             'sizeMin' => 'nullable|integer|min:0',
             'type' => 'required|string',
             'furnishing' => 'required|string|in:Yes,No',
-            'verified' => 'boolean',
+            // 'verified' sekarang bisa '1' atau '0' dari form AJAX
+            'verified' => 'required|in:0,1',
         ]);
 
-        // Set nilai default
-        $validated['verified'] = $request->has('verified');
+        $validated['verified'] = $request->verified == '1'; // Konversi ke boolean
         $validated['addedOn'] = now();
 
-        Property::create($validated);
+        $property = Property::create($validated);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data properti berhasil ditambahkan.',
+                'property' => $property // Kirim data properti yang baru dibuat jika perlu di frontend
+            ]);
+        }
 
         return redirect()->route('data-master.properti.index')
             ->with('success', 'Data properti berhasil ditambahkan.');
+    }
+
+    public function getPropertyEditData($id)
+    {
+        $property = Property::findOrFail($id);
+        // Anda mungkin perlu menyesuaikan format data agar sesuai dengan kebutuhan frontend
+        // misalnya, konversi boolean ke '1'/'0' atau format tanggal jika perlu
+        return response()->json($property);
     }
 
     /**
@@ -89,14 +105,21 @@ class DataMasterController extends Controller
             'sizeMin' => 'nullable|integer|min:0',
             'type' => 'required|string',
             'furnishing' => 'required|string|in:Yes,No',
-            'verified' => 'boolean',
+            'verified' => 'required|in:0,1',
         ]);
 
-        // Set nilai default
-        $validated['verified'] = $request->has('verified');
+        $validated['verified'] = $request->verified == '1';
 
         $property = Property::findOrFail($id);
         $property->update($validated);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data properti berhasil diperbarui.',
+                'property' => $property // Kirim data properti yang diperbarui
+            ]);
+        }
 
         return redirect()->route('data-master.properti.index')
             ->with('success', 'Data properti berhasil diperbarui.');

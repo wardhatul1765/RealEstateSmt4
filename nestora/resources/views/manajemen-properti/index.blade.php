@@ -70,8 +70,11 @@
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Price (AED)</th>
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Size (sqft)</th>
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Furnishing</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">verified</th>
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Added On</th>
+
+
                                 {{-- Kolom Aksi bisa ditambahkan di sini jika diperlukan untuk CRUD --}}
                                 {{-- <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Aksi</th> --}}
                             </tr>
@@ -89,6 +92,10 @@
                                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                         {{-- Menggunakan accessor getFurnishingAttribute dari model Property --}}
                                         {{ $property->furnishing ? 'Yes' : 'No' }}
+                                    </td>
+                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                        {{-- Menggunakan accessor getFurnishingAttribute dari model Property --}}
+                                        {{ $property->verified ? 'true' : 'false' }}
                                     </td>
                                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $property->type }}</td>
                                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
