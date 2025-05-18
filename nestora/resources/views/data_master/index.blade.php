@@ -222,7 +222,7 @@
                     } else if (mode === 'edit' && propertyId) {
                         this.modalTitle = 'Edit Properti';
                         this.submitButtonText = 'Update';
-                        this.formAction = {{ url('data-master/properti') }}/${propertyId};
+                        this.formAction = `{{ url('data-master/properti') }}/${propertyId}`;
                         document.getElementById('formMethod').value = 'PUT';
                         this.fetchPropertyData(propertyId); // fetchPropertyData akan menangani isSubmitting
                     }
@@ -231,7 +231,7 @@
 
                 closeModal() {
                     this.$dispatch('close-modal', 'propertyFormModal');
-                    this.resetAlpineFormData();
+                    this.resetAlpineFormData(); 
                     this.currentPropertyId = null;
                     this.ajaxErrors = {};
                 },
@@ -245,14 +245,14 @@
                 },
 
                 async fetchPropertyData(id) {
-                    this.isSubmitting = true;
+                    this.isSubmitting = true; 
                     try {
-                        let url = {{ route('data-master.properti.edit-data', ['id' => '_PLACEHOLDER_']) }};
-                        url = url.replace('PLACEHOLDER', id);
+                        let url = `{{ route('data-master.properti.edit-data', ['id' => '_PLACEHOLDER_']) }}`;
+                        url = url.replace('_PLACEHOLDER_', id);
                         const response = await fetch(url);
                         if (!response.ok) {
                             const errorData = await response.json().catch(() => ({ message: 'Gagal mengambil data properti (respons server tidak valid atau bukan JSON).' }));
-                            throw new Error(errorData.message || HTTP error! status: ${response.status});
+                            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
                         }
                         const data = await response.json();
                         this.formData.title = data.title || '';
@@ -262,7 +262,7 @@
                         this.formData.furnishing = data.furnishing || '';
                         this.formData.displayAddress = data.displayAddress || '';
                         this.formData.sizeMin = data.sizeMin || '';
-                        this.formData.verified = !!data.verified;
+                        this.formData.verified = !!data.verified; 
                         this.formData.type = data.type || 'Residential for Sale';
                     } catch (error) {
                         console.error('Error fetching property data:', error);
@@ -305,7 +305,7 @@
                             this.isSubmitting = false;
                             return; // Hentikan eksekusi agar modal tetap terbuka dan error tampil
                         }
-
+                        
                         // Untuk status sukses (200-299) atau error server lain (500, dll)
                         // kita akan langsung reload halaman.
                         // Tidak perlu alert sukses lagi, langsung reload.
