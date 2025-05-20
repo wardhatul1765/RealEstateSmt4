@@ -71,6 +71,7 @@ return [
             'username' => env('DB_MONGO_USERNAME', ''),       // Mengambil username dari .env (DB_MONGO_USERNAME)
             'password' => env('DB_MONGO_PASSWORD', ''),       // Mengambil password dari .env (DB_MONGO_PASSWORD)
             'options'  => [
+                
                 'database' => env('DB_MONGO_AUTHENTICATION_DATABASE', 'admin'), // DB untuk autentikasi, ambil dari .env
             ]
         ],

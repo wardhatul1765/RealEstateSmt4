@@ -36,11 +36,18 @@ return [
     */
 
     'guards' => [
+        'api' => [
+        'driver' => 'jwt',
+        'provider' => 'users',
+    ],
         'web' => [
             'driver' => 'session',
             'provider' => 'admins',
         ],
+        
     ],
+
+    
 
     /*
     |--------------------------------------------------------------------------
@@ -65,10 +72,10 @@ return [
             'model' => App\Models\Admin::class,
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\User::class,
+        ],
     ],
 
     /*

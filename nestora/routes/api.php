@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\APIAuthController;
 use App\Http\Controllers\PredictionController;
+use App\Http\Controllers\APIPropertyController;
+use App\Http\Controllers\APIImageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,13 +18,25 @@ use App\Http\Controllers\PredictionController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
+
+// Route::post('/login', [APIAuthController::class, 'apiLogin']);
+
+// // routes/api.php
+// Route::post('/register', [APIAuthController::class, 'apiRegister']);
+
+Route::post('/upload-images', [APIImageController::class, 'upload']);
+Route::post('/properties', [APIPropertyController::class, 'store']);
+
+
+Route::post('/register', [APIAuthController::class, 'register']);
+Route::post('/login', [APIAuthController::class, 'login']);
+
+Route::middleware('auth:api')->group(function () {
+    Route::get('/profile', [APIAuthController::class, 'profile']);
+    Route::post('/logout', [APIAuthController::class, 'logout']);
 });
-
-Route::post('/login', [APIAuthController::class, 'apiLogin']);
-
-// routes/api.php
-Route::post('/register', [APIAuthController::class, 'apiRegister']);
 
 Route::middleware('auth:sanctum')->post('/predict-price', [PredictionController::class, 'predictPrice']);
