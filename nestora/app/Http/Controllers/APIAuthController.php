@@ -40,7 +40,7 @@ class APIAuthController extends Controller
                 'profile_image' => $user->profile_image ?? '',
                 'token' => $token,
                 'token_type' => 'bearer',
-                'expires_in' => config('jwt.ttl') * 60,
+                'expires_in' => config('jwt.ttl')*60,
             ],
         ]);
     }
@@ -72,7 +72,7 @@ class APIAuthController extends Controller
                 'profile_image' => $user->profile_image ?? '',
                 'token' => $token,
                 'token_type' => 'bearer',
-                'expires_in' => config('jwt.ttl') * 60,
+                'expires_in' => config('jwt.ttl')*60, // Menghitung dalam detik
             ],
         ], 201);
     }
@@ -99,7 +99,7 @@ class APIAuthController extends Controller
         return response()->json([
             'token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => config('jwt.ttl') * 60,
+            'expires_in' => config('jwt.ttl')*60,
         ]);
     }
 }

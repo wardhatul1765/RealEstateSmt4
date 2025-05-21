@@ -27,16 +27,14 @@ use App\Http\Controllers\APIImageController;
 // // routes/api.php
 // Route::post('/register', [APIAuthController::class, 'apiRegister']);
 
-Route::post('/upload-images', [APIImageController::class, 'upload']);
-Route::post('/properties', [APIPropertyController::class, 'store']);
-
-
 Route::post('/register', [APIAuthController::class, 'register']);
 Route::post('/login', [APIAuthController::class, 'login']);
 
-Route::middleware('auth:api')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [APIAuthController::class, 'profile']);
     Route::post('/logout', [APIAuthController::class, 'logout']);
+    Route::post('/properties', [APIPropertyController::class, 'store']);
+    Route::post('/upload-images', [APIImageController::class, 'upload']);
 });
 
 Route::middleware('auth:sanctum')->post('/predict-price', [PredictionController::class, 'predictPrice']);

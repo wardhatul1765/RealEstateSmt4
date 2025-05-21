@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Property;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class APIPropertyController extends Controller
 {
@@ -13,6 +14,7 @@ class APIPropertyController extends Controller
 
     public function store(Request $request)
     {
+        Log::info('Request to store property received', $request->all());
         $user = auth()->user(); // pastikan middleware sanctum sudah aktif
 
         $validated = $request->validate([

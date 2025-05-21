@@ -78,6 +78,7 @@ return [
         'authenticate_session' => Laravel\Sanctum\Http\Middleware\AuthenticateSession::class,
         'encrypt_cookies' => App\Http\Middleware\EncryptCookies::class,
         'verify_csrf_token' => App\Http\Middleware\VerifyCsrfToken::class,
+        'personal_access_token_model' => App\Models\MongoPersonalAccessToken::class,
     ],
 
 ];

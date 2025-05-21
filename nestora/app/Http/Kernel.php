@@ -69,5 +69,7 @@ class Kernel extends HttpKernel
         'jwt.refresh' => \Tymon\JWTAuth\Http\Middleware\RefreshToken::class,
         'jwt.verify' => \Tymon\JWTAuth\Http\Middleware\AuthenticateAndRenew::class,
         'api.auth' => \App\Http\Middleware\ApiAuthenticate::class,
+        'auth:sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+
     ];
 }
