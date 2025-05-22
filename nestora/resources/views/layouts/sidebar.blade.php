@@ -12,7 +12,7 @@
 
        {{-- Logo Section --}}
        <div class="mb-6 pt-2 pb-4 border-b border-gray-200 dark:border-gray-700">
-           <a href="{{ route('dashboard') }}" class="flex items-center justify-center md:justify-start">
+           <a href="{{ route('landing') }}" class="flex items-center justify-center md:justify-start">
                <div class="flex items-center justify-center h-8 w-8 bg-lime-500 rounded mr-2 flex-shrink-0">
                    <span class="text-white font-bold text-lg">N</span>
                </div>

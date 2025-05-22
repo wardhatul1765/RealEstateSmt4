@@ -7,9 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse; // <-- Import untuk response JSON
+
 
 class PredictionController extends Controller
 {
@@ -71,7 +73,8 @@ class PredictionController extends Controller
                             'hasil_prediksi_idr' => $predictionResultIDR,
                             'created_at' => Carbon::now(),
                             'updated_at' => Carbon::now(),
-                            // 'user_id' => auth()->id(), // Jika web butuh user id
+                            // 'admin_id'    => Auth::id(), // <-- Ambil ID user yang sedang login
+                            'admin_name'  => Auth::user()->name,
                             'source' => 'web' // Tandai sumbernya
                         ]
                     );

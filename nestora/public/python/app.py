@@ -54,8 +54,8 @@ def predict():
         view_type = int(data['view_type'])
         title_keyword = int(data['title_keyword'])
 
-        features = np.array([[bathrooms, bedrooms, furnishing, sizeMin,verified, 
-                              listing_age_category, view_type, title_keyword]])
+        features = np.array([[bedrooms, bathrooms, sizeMin, verified, furnishing,
+                            listing_age_category, view_type, title_keyword]]) # <-- URUTAN SESUAI TRAINING
         
         print(f"Fitur untuk model: {features}")
         prediction = model.predict(features)

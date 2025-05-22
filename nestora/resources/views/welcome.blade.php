@@ -73,7 +73,7 @@
                 {{-- Nav Links (Desktop) --}}
                 <div class="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-6">
                     <a href="#fitur" class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-lime-600 dark:hover:text-lime-400 transition-colors duration-200">Fitur</a>
-                    <a href="#kontak" class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-lime-600 dark:hover:text-lime-400 transition-colors duration-200">Kontak</a>
+                    <!-- <a href="#kontak" class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-lime-600 dark:hover:text-lime-400 transition-colors duration-200">Kontak</a> -->
                     <span class="border-l border-gray-200 dark:border-gray-700 h-6"></span>
                     @auth
                         <a href="{{ route('dashboard') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-lime-600 hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500 dark:focus:ring-offset-gray-800 transition-colors duration-200">
@@ -105,7 +105,7 @@
             <div class="rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 bg-white dark:bg-gray-800 divide-y divide-gray-50 dark:divide-gray-700">
                 <div class="pt-2 pb-3 space-y-1">
                     <a href="#fitur" @click="mobileMenuOpen = false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700">Fitur</a>
-                    <a href="#kontak" @click="mobileMenuOpen = false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700">Kontak</a>
+                    <!-- <a href="#kontak" @click="mobileMenuOpen = false" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700">Kontak</a> -->
                 </div>
                 <div class="pt-4 pb-3">
                      @auth

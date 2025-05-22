@@ -23,7 +23,7 @@
                     @endif
 
                     {{-- Tabel untuk menampilkan data riwayat --}}
-                    <div class="overflow-x-auto"> {{-- Pindahkan overflow-x ke sini --}}
+                    <div class="overflow-x-auto">
                         <table class="min-w-full leading-normal">
                             <thead>
                                 {{-- Header tabel --}}
@@ -33,7 +33,7 @@
                                     <th class="py-3 px-6">Input Fitur (Ringkasan)</th>
                                     <th class="py-3 px-6 text-right">Hasil Prediksi (IDR)</th>
                                     <th class="py-3 px-6 text-right">Hasil Prediksi (AED)</th>
-                                    {{-- Tambahkan kolom lain jika perlu --}}
+                                    <th class="py-3 px-6">Diprediksi Oleh</th>
                                 </tr>
                             </thead>
                             <tbody class="text-gray-700 dark:text-gray-200 text-sm">
@@ -48,13 +48,8 @@
                                         @if(isset($prediksi->created_at))
                                             @php
                                                 try {
-                                                    // Jika $prediksi->created_at adalah instance MongoDB\BSON\UTCDateTime atau sejenisnya
-                                                    if (method_exists($prediksi->created_at, 'toDateTime')) {
-                                                        echo $prediksi->created_at->toDateTime()->setTimezone(new DateTimeZone('Asia/Jakarta'))->format('d M Y H:i'); // Sesuaikan Timezone
-                                                    } else {
-                                                        // Coba parse jika string atau tipe lain
-                                                        echo \Carbon\Carbon::parse($prediksi->created_at)->setTimezone('Asia/Jakarta')->format('d M Y H:i'); // Sesuaikan Timezone
-                                                    }
+                                                    // created_at adalah string, jadi langsung parse dengan Carbon
+                                                    echo \Carbon\Carbon::parse($prediksi->created_at)->setTimezone('Asia/Jakarta')->format('d M Y H:i');
                                                 } catch (\Exception $e) {
                                                     echo 'Invalid Date'; // Tampilkan pesan jika format tidak dikenali
                                                 }
@@ -68,10 +63,11 @@
                                     <td class="py-3 px-6">
                                         Bath: {{ $prediksi->bathrooms ?? 'N/A' }},
                                         Bed: {{ $prediksi->bedrooms ?? 'N/A' }},
-                                        Size: {{ $prediksi->sizeMin ?? 'N/A' }} m², {{-- Ubah sqft ke m² jika data sudah dikonversi --}}
-                                        Furn: {{ isset($prediksi->furnishing) && $prediksi->furnishing == 1 ? 'Yes' : 'No' }},
-                                        Verif: {{ isset($prediksi->verified) && $prediksi->verified == 1 ? 'Yes' : 'No' }}
-                                        {{-- Contoh Tambahan (jika data ada): --}}
+                                        Size: {{ $prediksi->sizeMin ?? 'N/A' }} m²,
+                                        {{-- Sesuaikan perbandingan untuk string '1' atau '0' --}}
+                                        Furn: {{ isset($prediksi->furnishing) && $prediksi->furnishing == '1' ? 'Yes' : 'No' }},
+                                        Verif: {{ isset($prediksi->verified) && $prediksi->verified == '1' ? 'True' : 'False' }} {{-- Asumsi '1' itu True, '0' itu False --}}
+                                        {{-- Contoh Tambahan jika field ada di data Anda: --}}
                                         {{-- , View: {{ $prediksi->view_type ?? 'N/A' }}, Age: {{ $prediksi->listing_age_category ?? 'N/A' }}, Key: {{ $prediksi->title_keyword ?? 'N/A' }} --}}
                                     </td>
 
@@ -84,12 +80,30 @@
                                     <td class="py-3 px-6 text-right">
                                         AED {{ number_format($prediksi->hasil_prediksi_aed ?? 0, 2, ',', '.') }}
                                     </td>
+
+                                    {{-- KOLOM DIPREDIKSI OLEH (DISESUAIKAN DENGAN STRUKTUR ANDA) --}}
+                                    <td class="py-3 px-6">
+                                        @if(isset($prediksi->source))
+                                            @if($prediksi->source == 'web' && isset($prediksi->admin_name))
+                                                Admin ({{ $prediksi->admin_name }})
+                                            @elseif(($prediksi->source == 'mobile' || $prediksi->source == 'user') && isset($prediksi->user_name)) {{-- Ganti 'user_name' jika field untuk nama user berbeda --}}
+                                                User ({{ $prediksi->user_name }})
+                                            @elseif($prediksi->source == 'web')
+                                                Admin (Nama tidak tersedia)
+                                            @elseif($prediksi->source == 'mobile' || $prediksi->source == 'user')
+                                                User (Nama tidak tersedia)
+                                            @else
+                                                Sumber: {{ ucfirst($prediksi->source) }}
+                                            @endif
+                                        @else
+                                            N/A
+                                        @endif
+                                    </td>
                                 </tr>
                                 @empty
                                 {{-- Pesan jika tidak ada data riwayat --}}
                                 <tr>
-                                    {{-- Sesuaikan colspan dengan jumlah kolom header --}}
-                                    <td colspan="5" class="text-center py-4 px-6 text-gray-500 dark:text-gray-400">
+                                    <td colspan="6" class="text-center py-4 px-6 text-gray-500 dark:text-gray-400">
                                         Belum ada riwayat prediksi yang tersimpan di MongoDB.
                                     </td>
                                 </tr>
@@ -97,8 +111,6 @@
                             </tbody>
                         </table>
                     </div>
-
-                    {{-- Bagian pagination standar Laravel dihapus --}}
 
                 </div>
             </div>
