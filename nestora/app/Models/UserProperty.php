@@ -10,7 +10,7 @@ class UserProperty extends Model
     use HasFactory;
 
     protected $connection = 'mongodb';
-    protected $collection = 'user_properties'; // khusus properti dari user
+    protected $collection = 'user_properties';
 
     protected $fillable = [
         'title',
@@ -22,14 +22,18 @@ class UserProperty extends Model
         'furnishing',
         'verified',
         'status',
-        'user_id', // <--- ini penting untuk relasi user
+        'user_id',
         'address',
-        'image', // filename utama
-        'additional_images', // array filename tambahan
+        'image', // <-- sebagai array dari banyak nama file
+    ];
+
+    protected $casts = [
+        'image' => 'array', // <--- ini penting!
     ];
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id', '_id');
     }
 }
+

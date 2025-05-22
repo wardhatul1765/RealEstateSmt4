@@ -50,4 +50,10 @@ class User extends Model implements AuthenticatableContract, CanResetPasswordCon
     {
         return [];
     }
+
+    public function properties()
+    {
+        return $this->hasMany(Property::class, 'user_id', '_id');
+    }
+
 }

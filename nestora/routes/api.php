@@ -6,6 +6,7 @@ use App\Http\Controllers\APIAuthController;
 use App\Http\Controllers\PredictionController;
 use App\Http\Controllers\APIPropertyController;
 use App\Http\Controllers\APIImageController;
+use Illuminate\Support\Facades\Log;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,12 +30,23 @@ use App\Http\Controllers\APIImageController;
 
 Route::post('/register', [APIAuthController::class, 'register']);
 Route::post('/login', [APIAuthController::class, 'login']);
+Route::post('/refresh', [APIAuthController::class, 'refresh']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('jwt.auth')->group(function () {
     Route::get('/profile', [APIAuthController::class, 'profile']);
     Route::post('/logout', [APIAuthController::class, 'logout']);
     Route::post('/properties', [APIPropertyController::class, 'store']);
-    Route::post('/upload-images', [APIImageController::class, 'upload']);
+    Route::post('/properties/{id}/upload-image', [APIPropertyController::class, 'uploadImage']);
+    Route::put('/properties/{id}', [APIPropertyController::class, 'update']);
+    // Route::post('/upload-images', [APIImageController::class, 'upload']);
+
 });
+
+// Log::info('Request payload:', $request->all());
+
+Route::middleware('jwt.auth')->get('/test', function () {
+    return response()->json(['message' => 'Authenticated!']);
+});
+
 
 Route::middleware('auth:sanctum')->post('/predict-price', [PredictionController::class, 'predictPrice']);
