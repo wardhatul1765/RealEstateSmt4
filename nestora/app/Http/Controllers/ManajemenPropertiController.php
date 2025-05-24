@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Persetujuan;
+use App\Models\UserProperty; // Menggunakan model Property
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use App\Models\Property;
- // Tambahkan ini jika ingin return response sederhana
+use Illuminate\Http\Response; // Tambahkan ini jika ingin return response sederhana
 
 class ManajemenPropertiController extends Controller
 {
@@ -19,7 +17,7 @@ class ManajemenPropertiController extends Controller
         $searchTerm = $request->input('search');
 
         // Memulai query
-        $query = Property::query();
+        $query = UserProperty::query();
 
         // Jika ada input pencarian, tambahkan kondisi where
         if ($searchTerm) {
@@ -28,24 +26,24 @@ class ManajemenPropertiController extends Controller
 
             $query->where(function ($q) use ($escapedSearchTerm, $searchTerm) {
                 // Pencarian untuk field teks
+                // Sesuaikan nama field dengan yang ada di Model Property
                 $q->where('title', 'regexp', "/.*{$escapedSearchTerm}.*/i") // 'i' untuk case-insensitive
-                  ->orWhere('displayAddress', 'regexp', "/.*{$escapedSearchTerm}.*/i")
-                  ->orWhere('type', 'regexp', "/.*{$escapedSearchTerm}.*/i")
-                  ->orWhere('description', 'regexp', "/.*{$escapedSearchTerm}.*/i") // Tetap mencari di deskripsi
-                  ->orWhere('view_type', 'regexp', "/.*{$escapedSearchTerm}.*/i")
-                  ->orWhere('furnishing', 'regexp', "/.*{$escapedSearchTerm}.*/i"); // Mencari berdasarkan furnishing (misal "YES" atau "NO")
+                    ->orWhere('Address', 'regexp', "/.*{$escapedSearchTerm}.*/i") // Sebelumnya 'displayAddress'
+                    ->orWhere('propertyType', 'regexp', "/.*{$escapedSearchTerm}.*/i") // Sebelumnya 'type'
+                    // ->orWhere('description', 'regexp', "/.*{$escapedSearchTerm}.*/i") // Dihapus karena 'description' tidak ada di model Property terbaru
+                    ->orWhere('mainView', 'regexp', "/.*{$escapedSearchTerm}.*/i") // Sebelumnya 'view_type'
+                    ->orWhere('furnishing', 'regexp', "/.*{$escapedSearchTerm}.*/i");
 
                 // Jika searchTerm adalah numerik, coba cari juga di field numerik untuk kecocokan persis
                 if (is_numeric($searchTerm)) {
                     $numericSearchTerm = (float) $searchTerm; // Konversi ke float untuk konsistensi
                     $q->orWhere('bedrooms', $numericSearchTerm)
-                      ->orWhere('bathrooms', $numericSearchTerm)
-                      ->orWhere('price', $numericSearchTerm)
-                      ->orWhere('sizeMin', $numericSearchTerm);
+                        ->orWhere('bathrooms', $numericSearchTerm)
+                        ->orWhere('price', $numericSearchTerm)
+                        ->orWhere('sizeMin', $numericSearchTerm);
                 }
-                // Catatan: Pencarian pada field tanggal (addedOn) biasanya memerlukan UI dan logika khusus (misal, date range picker)
+                // Catatan: Pencarian pada field tanggal (addedOn) biasanya memerlukan UI dan logika khusus
                 // dan tidak ideal untuk pencarian teks umum seperti ini.
-                // Field 'No' (nomor urut) adalah untuk tampilan dan tidak dicari di database.
             });
         }
 
@@ -58,15 +56,17 @@ class ManajemenPropertiController extends Controller
 
     /**
      * Menampilkan halaman persetujuan iklan properti.
+     * Akan menampilkan properti yang statusnya belum true (belum disetujui).
      * Route: manajemen-properti.persetujuan
      */
     public function persetujuan()
-{
-    $properties = Persetujuan::where('verified', false)->paginate(10);
+    {
+        // Mengambil properti yang statusnya false (belum disetujui/pending)
+        // Menggunakan model Property dan field 'status' (boolean)
+        $properties = UserProperty::where('status', false)->paginate(10);
 
-
-    return view('manajemen-properti.persetujuan', compact('properties'));
-}
+        return view('manajemen-properti.persetujuan', compact('properties'));
+    }
 
 
     /**
@@ -75,9 +75,7 @@ class ManajemenPropertiController extends Controller
      */
     public function create()
     {
-        // Kosongkan dulu atau beri placeholder
         return view('manajemen-properti.create');
-        //  return response("Halaman Form Tambah Properti"); // Placeholder
     }
 
     /**
@@ -86,23 +84,27 @@ class ManajemenPropertiController extends Controller
      */
     public function store(Request $request)
     {
-        // Kosongkan dulu
-        // Logika validasi dan penyimpanan ditunda
+        // Logika validasi dan penyimpanan perlu diimplementasikan
+        // Contoh:
+        // $validatedData = $request->validate([
+        //     'title' => 'required|string|max:255',
+        //     'Address' => 'required|string',
+        //     'propertyType' => 'required|string',
+        //     'price' => 'required|numeric',
+        //     // tambahkan validasi lain sesuai kebutuhan
+        // ]);
+        // Property::create($validatedData);
 
-        // Redirect sementara atau beri respons
-        return redirect()->route('manajemen-properti.index')->with('info', 'Fungsi Simpan belum diimplementasikan.');
-        // return response("Proses Simpan Properti (Belum Implementasi)"); // Placeholder
+        return redirect()->route('manajemen-properti.index')->with('info', 'Fungsi Simpan belum diimplementasikan sepenuhnya.');
     }
 
     /**
      * Menampilkan detail properti (Opsional, tapi baik untuk CRUD).
      * Route: manajemen-properti.show
      */
-    public function show($properti) // Nama parameter {properti} dari route
+    public function show(UserProperty $properti) // Menggunakan Route Model Binding
     {
-        // Kosongkan dulu
-        return view('manajemen-properti.show');
-        // return response("Halaman Detail Properti ID: " . $properti); // Placeholder
+        return view('manajemen-properti.show', compact('properti'));
     }
 
 
@@ -110,59 +112,59 @@ class ManajemenPropertiController extends Controller
      * Menampilkan form untuk mengedit properti.
      * Route: manajemen-properti.edit
      */
-    public function edit($properti) // Nama parameter {properti} dari route
+    public function edit(UserProperty $properti) // Menggunakan Route Model Binding
     {
-        // Kosongkan dulu
-        return view('manajemen-properti.edit');
-        //  return response("Halaman Form Edit Properti ID: " . $properti); // Placeholder
+        return view('manajemen-properti.edit', compact('properti'));
     }
 
     /**
      * Memperbarui data properti di database.
      * Route: manajemen-properti.update (Method: PATCH/PUT)
      */
-    public function update(Request $request, $properti) // Nama parameter {properti} dari route
+    public function update(Request $request, UserProperty $properti) // Menggunakan Route Model Binding
     {
-        // Kosongkan dulu
-        // Logika validasi dan update ditunda
+        // Logika validasi dan update perlu diimplementasikan
+        // Contoh:
+        // $validatedData = $request->validate([
+        //     'title' => 'required|string|max:255',
+        //     // ... validasi lainnya
+        // ]);
+        // $properti->update($validatedData);
 
-        // Redirect sementara atau beri respons
-        return redirect()->route('manajemen-properti.index')->with('info', 'Fungsi Update belum diimplementasikan.');
-        //  return response("Proses Update Properti ID: " . $properti . " (Belum Implementasi)"); // Placeholder
+        return redirect()->route('manajemen-properti.index')->with('info', 'Fungsi Update belum diimplementasikan sepenuhnya.');
     }
 
     /**
      * Menghapus properti dari database.
      * Route: manajemen-properti.destroy (Method: DELETE)
      */
-    public function destroy($properti) // Nama parameter {properti} dari route
+    public function destroy(UserProperty $properti) // Menggunakan Route Model Binding
     {
-        // Kosongkan dulu
-        // Logika delete ditunda
-
-        // Redirect sementara atau beri respons
-        return redirect()->route('manajemen-properti.index')->with('info', 'Fungsi Hapus belum diimplementasikan.');
-        // return response("Proses Hapus Properti ID: " . $properti . " (Belum Implementasi)"); // Placeholder
+        // $properti->delete();
+        return redirect()->route('manajemen-properti.index')->with('info', 'Fungsi Hapus belum diimplementasikan sepenuhnya.');
     }
 
-     /**
-     * Mengubah status persetujuan properti (Contoh action tambahan).
+    /**
+     * Mengubah status properti menjadi disetujui (status = true).
      */
     public function approve($id)
-{
-    $property = Property::findOrFail($id);
-    $property->status = 'approved';
-    $property->save();
+    {
+        $property = UserProperty::findOrFail($id);
+        $property->status = true; // Mengubah status menjadi true (disetujui)
+        $property->save();
 
-    return redirect()->route('manajemen-properti.persetujuan')->with('success', 'Iklan berhasil disetujui.');
-}
+        return redirect()->route('manajemen-properti.persetujuan')->with('success', 'Properti berhasil disetujui.');
+    }
 
-public function reject($id)
-{
-    $property = Property::findOrFail($id);
-    $property->status = 'rejected';
-    $property->save();
+    /**
+     * Mengubah status properti menjadi ditolak (status = false).
+     */
+    public function reject($id)
+    {
+        $property = UserProperty::findOrFail($id);
+        $property->status = false; // Mengubah status menjadi false (ditolak/pending)
+        $property->save();
 
-    return redirect()->route('manajemen-properti.persetujuan')->with('success', 'Iklan berhasil ditolak.');
-}
+        return redirect()->route('manajemen-properti.persetujuan')->with('success', 'Properti berhasil ditolak.');
+    }
 }

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Property;
+use App\Models\UserProperty; // Menggunakan model UserProperty sesuai kode Anda
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Validator; // Untuk validasi AJAX
+use Illuminate\Support\Facades\Validator;
 
 class DataMasterController extends Controller
 {
@@ -14,19 +14,23 @@ class DataMasterController extends Controller
      */
     public function propertiIndex(Request $request)
     {
-        $query = Property::query()->latest('addedOn'); // Urutkan berdasarkan tanggal terbaru
+        // Menggunakan 'created_at' atau 'addedOn' sesuai field yang ada di UserProperty dan diinginkan untuk sorting
+        // Jika 'addedOn' tidak ada di UserProperty, gunakan 'created_at' atau field tanggal relevan lainnya.
+        // Untuk contoh ini, kita asumsikan 'created_at' atau default model Eloquent jika 'addedOn' tidak ada.
+        // Jika UserProperty punya 'addedOn', maka $query = UserProperty::query()->latest('addedOn'); sudah benar.
+        // Jika tidak, mungkin $query = UserProperty::query()->latest(); atau latest('created_at')
+        $query = UserProperty::query()->latest('created_at'); // Diasumsikan 'addedOn' mungkin tidak ada, ganti jika perlu
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('title', 'like', '%' . $search . '%')
-                  ->orWhere('displayAddress', 'like', '%' . $search . '%');
+                  ->orWhere('Address', 'like', '%' . $search . '%'); // Disesuaikan dari displayAddress ke address
             });
         }
 
-        $dataProperty = $query->paginate(15); // Sesuaikan jumlah item per halaman jika perlu
+        $dataProperty = $query->paginate(15);
         
-        // Pastikan view yang dipanggil sesuai dengan path file blade Anda
         return view('data_master.index', compact('dataProperty'));
     }
 
@@ -35,11 +39,12 @@ class DataMasterController extends Controller
      */
     public function getPropertyEditData($id)
     {
-        $property = Property::findOrFail($id);
-        // $property sudah otomatis di-cast oleh model, termasuk 'addedOn' ke Carbon.
-        // Jika frontend butuh format string tertentu untuk tanggal, bisa disesuaikan di sini
-        // atau serahkan ke JavaScript untuk memformatnya.
-        // Contoh: $property->addedOn_formatted = $property->addedOn->toDateString();
+        $property = UserProperty::findOrFail($id);
+        // Jika UserProperty memiliki cast untuk 'addedOn', Carbon sudah otomatis.
+        // Jika 'addedOn' tidak ada atau tidak di-cast, dan frontend butuh format:
+        // if ($property->addedOn) {
+        //    $property->addedOn_formatted = Carbon::parse($property->addedOn)->toDateString();
+        // }
         return response()->json($property);
     }
 
@@ -50,20 +55,22 @@ class DataMasterController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'displayAddress' => 'nullable|string|max:1000',
+            'Address' => 'nullable|string|max:1000', // Disesuaikan dari displayAddress
             'bedrooms' => 'nullable|integer|min:0',
             'bathrooms' => 'nullable|integer|min:0',
-            'price' => 'nullable|numeric|min:0',
+            'price' => 'nullable|numeric|min:0', // Pastikan UserProperty cast price ke float/integer sesuai kebutuhan
             'sizeMin' => 'nullable|numeric|min:0',
-            'type' => 'nullable|string|max:100',
-            'furnishing' => 'nullable|string|in:Yes,No,Partly',
-            'verified' => 'required|in:0,1', // Dari checkbox akan jadi '0' atau '1'
-            'addedOn' => 'required|date_format:Y-m-d',
-            'view_type' => 'nullable|string|max:100',
-            'keyword_flags' => 'nullable|string|max:100', // Diharapkan sudah array dari JS
-            'keyword_flags.*' => 'nullable|string|max:100', // Validasi tiap item di array
-            'title_keyword' => 'nullable|integer',
-            'listing_age_category' => 'nullable|integer',
+            'propertyType' => 'nullable|string|max:100', // Disesuaikan dari type
+            'furnishing' => 'nullable|string|in:Yes,No,Partly', // Model UserProperty $casts['furnishing'] => 'string'
+            'status' => 'required|in:0,1', // Disesuaikan dari verified. Model UserProperty $casts['status'] => 'boolean'
+            'addedOn' => 'nullable|date_format:Y-m-d', // Pastikan 'addedOn' ada di $fillable & $casts UserProperty jika ingin disimpan
+            'mainView' => 'nullable|string|max:100', // Disesuaikan dari view_type
+            'listing_age_category' => 'nullable|integer', // Sesuai UserProperty $fillable
+            'description' => 'nullable|string', // Sesuai UserProperty $fillable
+            'propertyLabel' => 'nullable|string|max:255', // Sesuai UserProperty $fillable
+            'image' => 'nullable|array', // Sesuai UserProperty $fillable & $casts
+            'image.*' => 'nullable|string', // Validasi untuk tiap item di array image jika image adalah array of strings (URL)
+            'user_id' => 'nullable|string', // Sesuai UserProperty $fillable
         ]);
 
         if ($validator->fails()) {
@@ -71,29 +78,21 @@ class DataMasterController extends Controller
         }
 
         $validatedData = $validator->validated();
-        $validatedData['verified'] = ($validatedData['verified'] == '1'); // Konversi ke boolean
+        // Konversi status (dari '0'/'1') ke boolean jika model UserProperty mengharapkan boolean
+        if (isset($validatedData['status'])) {
+            $validatedData['status'] = ($validatedData['status'] == '1');
+        }
         
-        // Pastikan addedOn di-parse dengan benar jika perlu, atau biarkan $casts yang urus
-        // $casts 'datetime' akan handle string YYYY-MM-DD
-        // $validatedData['addedOn'] = Carbon::parse($validatedData['addedOn']); // Sudah dihandle $casts
+        // Jika 'addedOn' ada dan dikirim, pastikan model UserProperty dapat menanganinya (ada di $fillable dan $casts 'datetime')
+        // Eloquent akan otomatis mem-parse string tanggal Y-m-d jika di-cast ke 'datetime'
 
-        // Jika keyword_flags datang dari input teks 'keyword_flags_string' yang dipisah koma:
-        // Ini seharusnya sudah dihandle di JS sebelum submit, tapi sebagai fallback:
-        // if ($request->has('keyword_flags_string') && is_string($request->keyword_flags_string)) {
-        //    $flags = array_map('trim', explode(',', $request->keyword_flags_string));
-        //    $validatedData['keyword_flags'] = array_filter($flags); // Hapus string kosong
-        // } elseif (!isset($validatedData['keyword_flags']) || !is_array($validatedData['keyword_flags'])) {
-        //    $validatedData['keyword_flags'] = []; // Default array kosong jika tidak valid
-        // }
-
-
-        $property = Property::create($validatedData);
+        $property = UserProperty::create($validatedData);
 
         return response()->json([
             'success' => true,
             'message' => 'Data properti berhasil ditambahkan.',
             'property' => $property
-        ], 201); // Status 201 Created
+        ], 201);
     }
 
     /**
@@ -101,24 +100,26 @@ class DataMasterController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $property = Property::findOrFail($id);
+        $property = UserProperty::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'displayAddress' => 'nullable|string|max:1000',
+            'Address' => 'nullable|string|max:1000', // Disesuaikan
             'bedrooms' => 'nullable|integer|min:0',
             'bathrooms' => 'nullable|integer|min:0',
             'price' => 'nullable|numeric|min:0',
             'sizeMin' => 'nullable|numeric|min:0',
-            'type' => 'nullable|string|max:100',
+            'propertyType' => 'nullable|string|max:100', // Disesuaikan
             'furnishing' => 'nullable|string|in:Yes,No,Partly',
-            'verified' => 'required|in:0,1',
-            'addedOn' => 'required|date_format:Y-m-d',
-            'view_type' => 'nullable|string|max:255', // HARUS STRING
-            'keyword_flags' => 'nullable|string|max:100', // HARUS STRING
-            'keyword_flags.*' => 'nullable|string|max:100',
-            'title_keyword' => 'nullable|integer',
+            'status' => 'required|in:0,1', // Disesuaikan
+            'addedOn' => 'nullable|date_format:Y-m-d',
+            'mainView' => 'nullable|string|max:255', // Disesuaikan
             'listing_age_category' => 'nullable|integer',
+            'description' => 'nullable|string',
+            'propertyLabel' => 'nullable|string|max:255',
+            'image' => 'nullable|array',
+            'image.*' => 'nullable|string',
+            'user_id' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -126,16 +127,9 @@ class DataMasterController extends Controller
         }
 
         $validatedData = $validator->validated();
-        $validatedData['verified'] = ($validatedData['verified'] == '1');
-        // $validatedData['addedOn'] = Carbon::parse($validatedData['addedOn']); // Sudah dihandle $casts
-
-        // Handle keyword_flags seperti di store jika perlu konversi dari string
-        // if ($request->has('keyword_flags_string') && is_string($request->keyword_flags_string)) {
-        //    $flags = array_map('trim', explode(',', $request->keyword_flags_string));
-        //    $validatedData['keyword_flags'] = array_filter($flags);
-        // } elseif (!isset($validatedData['keyword_flags']) || !is_array($validatedData['keyword_flags'])) {
-        //    $validatedData['keyword_flags'] = $property->keyword_flags ?? []; // Pertahankan nilai lama jika input baru tidak valid
-        // }
+        if (isset($validatedData['status'])) {
+            $validatedData['status'] = ($validatedData['status'] == '1');
+        }
 
         $property->update($validatedData);
 
@@ -151,15 +145,15 @@ class DataMasterController extends Controller
      */
     public function destroy($id)
     {
-        $property = Property::findOrFail($id);
+        $property = UserProperty::findOrFail($id);
         $property->delete();
 
-        // Untuk request non-AJAX, redirect dengan pesan sukses
         if (request()->ajax()) {
             return response()->json(['success' => true, 'message' => 'Data properti berhasil dihapus.']);
         }
 
-        return redirect()->route('data-master.properti.index') // Pastikan nama route ini benar
+        // Pastikan nama route ini benar ('data-master.properti.index' atau nama route Anda)
+        return redirect()->route('data-master.properti.index') 
                          ->with('success', 'Data properti berhasil dihapus.');
     }
 }

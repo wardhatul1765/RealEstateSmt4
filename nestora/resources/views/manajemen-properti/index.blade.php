@@ -73,8 +73,11 @@
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">verified</th>
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Added On</th>
-
-
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Main View</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Property Label</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Image</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created At</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Updated At</th>
                                 {{-- Kolom Aksi bisa ditambahkan di sini jika diperlukan untuk CRUD --}}
                                 {{-- <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Aksi</th> --}}
                             </tr>
@@ -84,26 +87,62 @@
                                 <tr>
                                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $dataProperty->firstItem() + $index }}</td>
                                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ Str::limit($property->title, 30) }}</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ Str::limit($property->displayAddress, 35) }}</td>
+                                    {{-- Menggunakan field 'Address' dari model --}}
+                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ Str::limit($property->Address, 35) }}</td>
                                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-center">{{ $property->bedrooms }}</td>
                                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-center">{{ $property->bathrooms }}</td>
                                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">AED {{ number_format($property->price, 0, ',', '.') }}</td>
                                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-center">{{ $property->sizeMin ?? '-' }}</td>
                                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                        {{-- Menggunakan accessor getFurnishingAttribute dari model Property --}}
-                                        {{ $property->furnishing ? 'Yes' : 'No' }}
+                                        @php
+                                            $displayFurnishing = '-'; // Default value
+                                            if (!empty($property->furnishing)) {
+                                                $furnishingValue = strtoupper($property->furnishing);
+                                                if ($furnishingValue === 'YES') {
+                                                    $displayFurnishing = 'Yes';
+                                                } elseif ($furnishingValue === 'NO') {
+                                                    $displayFurnishing = 'No';
+                                                } elseif ($furnishingValue === 'PARTLY') {
+                                                    $displayFurnishing = 'Partly';
+                                                } else {
+                                                    // Jika nilainya tidak dikenali tapi tidak kosong, tampilkan nilai asli
+                                                    $displayFurnishing = $property->furnishing;
+                                                }
+                                            }
+                                        @endphp
+                                        {{ $displayFurnishing }}
                                     </td>
                                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                        {{-- Menggunakan accessor getFurnishingAttribute dari model Property --}}
-                                        {{ $property->verified ? 'true' : 'false' }}
+                                        {{-- Menggunakan field 'status' (boolean) dari model --}}
+                                        {{ $property->status ? 'true' : 'false' }}
                                     </td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $property->type }}</td>
+                                    {{-- Menggunakan field 'propertyType' dari model --}}
+                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $property->propertyType }}</td>
                                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                        {{-- Pastikan addedOn adalah instance Carbon atau bisa di-parse --}}
-                                        @if($property->addedOn instanceof \Carbon\Carbon)
-                                            {{ $property->addedOn->format('d M Y') }}
+                                        @if($property->addedOn)
+                                            {{ \Carbon\Carbon::parse($property->addedOn)->format('d M Y H:i') }}
                                         @else
-                                            {{ \Carbon\Carbon::parse($property->addedOn)->format('d M Y') }}
+                                            -
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $property->mainView ?? '-' }}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $property->propertyLabel ?? '-' }}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                        {{-- Jika image adalah array, Anda mungkin ingin menampilkannya secara berbeda --}}
+                                        {{ is_array($property->image) ? implode(', ', $property->image) : ($property->image ?? '-') }}
+                                    </td>
+                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                        @if($property->created_at)
+                                            {{ \Carbon\Carbon::parse($property->created_at)->format('d M Y H:i') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                        @if($property->updated_at)
+                                            {{ \Carbon\Carbon::parse($property->updated_at)->format('d M Y H:i') }}
+                                        @else
+                                            -
                                         @endif
                                     </td>
                                     {{-- Kolom Aksi bisa ditambahkan di sini --}}
@@ -119,7 +158,8 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="11" class="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    {{-- Sesuaikan colspan dengan jumlah total kolom header --}}
+                                    <td colspan="16" class="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                         @if(request('search'))
                                             Pencarian untuk "{{ request('search') }}" tidak menemukan hasil.
                                         @else

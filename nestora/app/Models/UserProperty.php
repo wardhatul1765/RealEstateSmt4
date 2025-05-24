@@ -20,16 +20,13 @@ class UserProperty extends Model
         'bathrooms',
         'sizeMin',          // Ini adalah areaSqft dari Flutter
         'furnishing',
-        // 'verified',      // Anda tidak mengirim 'verified' dari Flutter saat create, jadi bisa opsional di sini atau diisi default oleh backend jika perlu
         'status',
         'user_id',
-        'address',
+        'Address',
         'image',            // Array URL gambar
-
-        // Tambahkan field berikut:
         'propertyType',
         'mainView',         // atau 'surroundingView' sesuai dengan nama field yang Anda gunakan di create()
-        'listingAgeCategory',// atau 'propertyAge' sesuai dengan nama field yang Anda gunakan di create()
+        'addedOn',// atau 'propertyAge' sesuai dengan nama field yang Anda gunakan di create()
         'propertyLabel',
     ];
 
@@ -48,6 +45,6 @@ class UserProperty extends Model
     {
         // Pastikan App\Models\User adalah model User Anda yang benar
         // dan 'user_id' di UserProperty cocok dengan '_id' (atau primary key) di koleksi User
-        return $this->belongsTo(User::class, 'user_id', '_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }
