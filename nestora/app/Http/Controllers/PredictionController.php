@@ -36,7 +36,7 @@ class PredictionController extends Controller
         $validatedData = $request->validate([
             'bathrooms'           => 'required|numeric|min:0',
             'bedrooms'            => 'required|numeric|min:0',
-            'furnishing'          => 'required|integer|in:0,1', // Berbeda dari mobile?
+            'furnishing'          => 'required|integer|in:0,1,2', // Berbeda dari mobile?
             'sizeMin'             => 'required|numeric|min:0', // Berbeda dari mobile?
             'verified'            => 'required|integer|in:0,1', // Berbeda dari mobile?
             'view_type'           => 'required|numeric',       // Berbeda dari mobile?

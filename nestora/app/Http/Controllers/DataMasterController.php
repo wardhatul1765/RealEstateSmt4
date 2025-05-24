@@ -56,7 +56,7 @@ class DataMasterController extends Controller
             'price' => 'nullable|numeric|min:0',
             'sizeMin' => 'nullable|numeric|min:0',
             'type' => 'nullable|string|max:100',
-            'furnishing' => 'nullable|string|in:Yes,No',
+            'furnishing' => 'nullable|string|in:Yes,No,Partly',
             'verified' => 'required|in:0,1', // Dari checkbox akan jadi '0' atau '1'
             'addedOn' => 'required|date_format:Y-m-d',
             'view_type' => 'nullable|string|max:100',

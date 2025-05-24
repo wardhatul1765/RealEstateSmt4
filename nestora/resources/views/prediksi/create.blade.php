@@ -55,6 +55,7 @@
                                     <option value="" disabled {{ old('furnishing') === null ? 'selected' : '' }}>Pilih Kondisi...</option>
                                     <option value="0" {{ old('furnishing') == '0' ? 'selected' : '' }}>Tidak Berperabot (Unfurnished)</option>
                                     <option value="1" {{ old('furnishing') == '1' ? 'selected' : '' }}>Berperabot (Furnished)</option>
+                                    <option value="2" {{ old('furnishing') == '2' ? 'selected' : '' }}>Berperabot (Partly)</option>
                                 </select>
                                 <x-input-error :messages="$errors->get('furnishing')" class="mt-2" />
                             </div>
