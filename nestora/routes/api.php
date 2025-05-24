@@ -32,7 +32,7 @@ Route::post('/register', [APIAuthController::class, 'register']);
 Route::post('/login', [APIAuthController::class, 'login']);
 Route::post('/refresh', [APIAuthController::class, 'refresh']);
 
-Route::middleware('jwt.auth')->group(function () {
+Route::middleware('auth:api')->group(function () {
     Route::get('/profile', [APIAuthController::class, 'profile']);
     Route::post('/logout', [APIAuthController::class, 'logout']);
     Route::post('/properties', [APIPropertyController::class, 'store']);
