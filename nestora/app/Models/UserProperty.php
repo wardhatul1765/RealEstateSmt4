@@ -30,12 +30,15 @@ class UserProperty extends Model
         'propertyLabel',
     ];
 
+     protected $guarded = ['id'];
+
     protected $casts = [
         'image' => 'array',         // Ini sudah benar
         'bedrooms' => 'integer',    // Casting eksplisit bisa membantu
         'bathrooms' => 'integer',
         'price' => 'float',         // atau 'double' atau 'decimal:<jumlah_desimal>'
         'sizeMin' => 'float',       // atau 'double'
+        'status' => 'boolean',      // Pastikan ini sesuai dengan field di database
     ];
 
     /**

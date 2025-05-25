@@ -26,24 +26,24 @@
                     </div>
                 @endif
 
-                {{-- Form Pencarian (Opsional untuk halaman persetujuan, bisa disesuaikan jika diperlukan) --}}
+                {{-- Form Pencarian --}}
                 <div class="mb-6">
                     <form method="GET" action="{{ route('manajemen-properti.persetujuan') }}">
                         <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3">
                             <div class="flex-grow w-full sm:w-auto">
                                 <label for="search" class="sr-only">{{ __('Cari Properti') }}</label>
                                 <input type="text" name="search" id="search"
-                                       class="block w-full border-gray-300 dark:border-gray-600 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200"
-                                       placeholder="Cari berdasarkan judul atau alamat..."
-                                       value="{{ request('search') }}">
+                                    class="block w-full border-gray-300 dark:border-gray-600 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200"
+                                    placeholder="Cari berdasarkan judul atau alamat..."
+                                    value="{{ request('search') }}">
                             </div>
                             <button type="submit"
-                                    class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 active:bg-indigo-700 focus:outline-none focus:border-indigo-700 focus:ring ring-indigo-300">
+                                class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 active:bg-indigo-700 focus:outline-none focus:border-indigo-700 focus:ring ring-indigo-300">
                                 {{ __('Cari') }}
                             </button>
                             @if(request('search'))
                                 <a href="{{ route('manajemen-properti.persetujuan') }}"
-                                   class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-500 active:bg-gray-700 focus:outline-none focus:border-gray-700 focus:ring ring-gray-300">
+                                    class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-500 active:bg-gray-700 focus:outline-none focus:border-gray-700 focus:ring ring-gray-300">
                                     {{ __('Reset') }}
                                 </a>
                             @endif
@@ -56,83 +56,113 @@
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-100 dark:bg-gray-700">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">No</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Title</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Address</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Bedrooms</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Bathrooms</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Price (AED)</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Size (sqft)</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Furnishing</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Added On</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">No</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Title</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Address</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Price</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                                <th class="px-1 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Beds</th>
+                                <th class="px-1 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Baths</th>
+                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Size</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Furn.</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">View</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Label</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Desc.</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Image</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Added</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            {{-- Menggunakan $properties dari controller, yang seharusnya berisi properti dengan status false --}}
                             @forelse ($properties as $index => $property)
                                 <tr>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $properties->firstItem() + $index }}</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ Str::limit($property->title, 30) }}</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ Str::limit($property->Address, 35) }}</td> {{-- Disesuaikan dari address ke Address --}}
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900 dark:text-gray-100">{{ $property->bedrooms }}</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900 dark:text-gray-100">{{ $property->bathrooms }}</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">AED {{ number_format($property->price, 0, ',', '.') }}</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-center text-gray-900 dark:text-gray-100">{{ $property->sizeMin ?? '-' }}</td> {{-- Disesuaikan dari size ke sizeMin --}}
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">{{ $properties->firstItem() + $index }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{ $property->title }}">{{ Str::limit($property->title, 20) }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{ $property->Address }}">{{ Str::limit($property->Address, 22) }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">AED {{ number_format($property->price, 0, ',', '.') }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{ $property->propertyType }}">{{ Str::limit($property->propertyType, 12) }}</td>
+                                    <td class="px-1 py-1 whitespace-nowrap text-xs text-center text-gray-900 dark:text-gray-100">{{ $property->bedrooms }}</td>
+                                    <td class="px-1 py-1 whitespace-nowrap text-xs text-center text-gray-900 dark:text-gray-100">{{ $property->bathrooms }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-center text-gray-900 dark:text-gray-100">{{ $property->sizeMin ?? '-' }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">
                                         @php
-                                            $displayFurnishing = '-'; // Default value
+                                            $displayFurnishing = '-';
                                             if (!empty($property->furnishing)) {
                                                 $furnishingValue = strtoupper($property->furnishing);
-                                                if ($furnishingValue === 'YES') {
-                                                    $displayFurnishing = 'Yes';
-                                                } elseif ($furnishingValue === 'NO') {
-                                                    $displayFurnishing = 'No';
-                                                } elseif ($furnishingValue === 'PARTLY') {
-                                                    $displayFurnishing = 'Partly';
-                                                } else {
-                                                    $displayFurnishing = $property->furnishing; // Tampilkan nilai asli jika tidak dikenali
-                                                }
+                                                if ($furnishingValue === 'YES') $displayFurnishing = 'Y';
+                                                elseif ($furnishingValue === 'NO') $displayFurnishing = 'N';
+                                                elseif ($furnishingValue === 'PARTLY') $displayFurnishing = 'P';
+                                                else $displayFurnishing = Str::limit($property->furnishing, 1);
                                             }
                                         @endphp
                                         {{ $displayFurnishing }}
                                     </td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $property->propertyType }}</td> {{-- Disesuaikan dari type ke propertyType --}}
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                        {{-- Menggunakan addedOn jika ada, jika tidak created_at --}}
-                                        @if($property->addedOn)
-                                            {{ \Carbon\Carbon::parse($property->addedOn)->format('d M Y H:i') }}
-                                        @elseif($property->created_at)
-                                            {{ \Carbon\Carbon::parse($property->created_at)->format('d M Y H:i') }}
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{ $property->mainView }}">{{ Str::limit($property->mainView, 10) ?? '-' }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{ $property->propertyLabel }}">{{ Str::limit($property->propertyLabel, 10) ?? '-' }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{ $property->description }}">
+                                        {{ Str::limit($property->description, 15) ?? '-' }}
+                                    </td>
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">
+                                        @php
+                                            $images = [];
+                                            if (is_string($property->image)) { // Jika image adalah string JSON
+                                                $decodedImages = json_decode($property->image, true);
+                                                if (json_last_error() === JSON_ERROR_NONE && is_array($decodedImages)) {
+                                                    $images = $decodedImages;
+                                                } elseif (!empty($property->image)) {
+                                                    $images = [$property->image]; // Anggap sebagai satu gambar jika bukan JSON array
+                                                }
+                                            } elseif (is_array($property->image)) { // Jika sudah array
+                                                $images = $property->image;
+                                            }
+                                        @endphp
+
+                                        @if(!empty($images))
+                                            <div class="flex items-center space-x-2">
+                                                <img src="{{ $images[0] }}" alt="Property image thumbnail"
+                                                     class="h-8 w-8 object-cover rounded cursor-pointer open-image-gallery"
+                                                     data-images="{{ htmlspecialchars(json_encode($images), ENT_QUOTES, 'UTF-8') }}">
+                                                <button type="button"
+                                                        class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-200 text-xs open-image-gallery"
+                                                        data-images="{{ htmlspecialchars(json_encode($images), ENT_QUOTES, 'UTF-8') }}">
+                                                    Lihat ({{ count($images) }})
+                                                </button>
+                                            </div>
                                         @else
                                             -
                                         @endif
                                     </td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-yellow-600 dark:text-yellow-400">
-                                        {{-- Karena halaman ini untuk persetujuan, statusnya diasumsikan 'Menunggu Persetujuan' --}}
-                                        {{-- Controller akan memfilter status=false --}}
-                                        Menunggu Persetujuan
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">
+                                        @if($property->addedOn)
+                                            {{ \Carbon\Carbon::parse($property->addedOn)->format('d/m/y') }}
+                                        @elseif($property->created_at)
+                                            {{ \Carbon\Carbon::parse($property->created_at)->format('d/m/y') }}
+                                        @else
+                                            -
+                                        @endif
                                     </td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-yellow-600 dark:text-yellow-400">
+                                        Pending
+                                    </td>
+                                    <td class="px-2 py-1 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex space-x-1">
                                             <form action="{{ route('manajemen-properti.approve', $property->id ?? $property->_id) }}" method="POST">
                                                 @csrf
-                                                @method('PATCH') {{-- Atau PUT, sesuaikan dengan route Anda --}}
-                                                <button type="submit" class="inline-flex items-center px-3 py-1 bg-green-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-600 active:bg-green-700 focus:outline-none focus:border-green-700 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150">Approve</button>
+                                                @method('PATCH')
+                                                <button type="submit" class="inline-flex items-center px-2 py-1 bg-green-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-600 active:bg-green-700 focus:outline-none focus:border-green-700 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150">Appr</button>
                                             </form>
                                             <form action="{{ route('manajemen-properti.reject', $property->id ?? $property->_id) }}" method="POST">
                                                 @csrf
-                                                @method('PATCH') {{-- Atau PUT, sesuaikan dengan route Anda --}}
-                                                <button type="submit" class="inline-flex items-center px-3 py-1 bg-red-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-600 active:bg-red-700 focus:outline-none focus:border-red-700 focus:ring ring-red-300 disabled:opacity-25 transition ease-in-out duration-150">Reject</button>
+                                                @method('PATCH')
+                                                <button type="submit" class="inline-flex items-center px-2 py-1 bg-red-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-600 active:bg-red-700 focus:outline-none focus:border-red-700 focus:ring ring-red-300 disabled:opacity-25 transition ease-in-out duration-150">Rej</button>
                                             </form>
                                         </div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="12" class="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    <td colspan="16" class="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                         @if(request('search'))
                                             Tidak ditemukan properti untuk pencarian: "{{ request('search') }}" yang menunggu persetujuan.
                                         @else
@@ -152,4 +182,119 @@
             </div>
         </div>
     </div>
+
+    <div id="imageGalleryModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-xl relative max-w-xl w-full max-h-[90vh] flex flex-col">
+            <button id="closeGalleryModal" class="absolute top-2 right-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 text-2xl leading-none">&times;</button>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4" id="galleryTitle">Galeri Gambar</h3>
+            <div class="flex-grow overflow-hidden flex items-center justify-center mb-4">
+                <img id="galleryImage" src="" alt="Property Image" class="max-w-full max-h-[60vh] object-contain">
+            </div>
+            <div class="flex justify-between items-center">
+                <button id="prevImage" class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-500 text-sm">&lt; Prev</button>
+                <span id="imageCounter" class="text-sm text-gray-700 dark:text-gray-300"></span>
+                <button id="nextImage" class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-500 text-sm">Next &gt;</button>
+            </div>
+        </div>
+    </div>
+
 </x-app-layout>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('imageGalleryModal');
+    const galleryImage = document.getElementById('galleryImage');
+    const closeButton = document.getElementById('closeGalleryModal');
+    const prevButton = document.getElementById('prevImage');
+    const nextButton = document.getElementById('nextImage');
+    const imageCounter = document.getElementById('imageCounter');
+    const galleryTriggers = document.querySelectorAll('.open-image-gallery');
+
+    let currentImages = [];
+    let currentIndex = 0;
+
+    function showImage(index) {
+        if (currentImages.length === 0) return;
+        galleryImage.src = currentImages[index];
+        imageCounter.textContent = `${index + 1} / ${currentImages.length}`;
+        prevButton.disabled = index === 0;
+        nextButton.disabled = index === currentImages.length - 1;
+
+        // Sembunyikan tombol jika hanya ada 1 gambar
+        if (currentImages.length <= 1) {
+            prevButton.classList.add('hidden');
+            nextButton.classList.add('hidden');
+            imageCounter.classList.add('hidden');
+        } else {
+            prevButton.classList.remove('hidden');
+            nextButton.classList.remove('hidden');
+            imageCounter.classList.remove('hidden');
+        }
+    }
+
+    galleryTriggers.forEach(trigger => {
+        trigger.addEventListener('click', function () {
+            const imagesData = this.dataset.images;
+            if (imagesData) {
+                try {
+                    currentImages = JSON.parse(imagesData);
+                    if (Array.isArray(currentImages) && currentImages.length > 0) {
+                        currentIndex = 0;
+                        showImage(currentIndex);
+                        modal.classList.remove('hidden');
+                        // Tambahkan class untuk mencegah scroll di body saat modal terbuka
+                        document.body.classList.add('overflow-hidden');
+                    } else {
+                        console.error('No images found or data is not an array.');
+                        currentImages = []; // Reset jika data tidak valid
+                    }
+                } catch (e) {
+                    console.error('Error parsing image data:', e);
+                    currentImages = []; // Reset jika parsing gagal
+                }
+            }
+        });
+    });
+
+    closeButton.addEventListener('click', function () {
+        modal.classList.add('hidden');
+        // Hapus class untuk mengembalikan scroll di body
+        document.body.classList.remove('overflow-hidden');
+        currentImages = []; // Kosongkan array gambar saat modal ditutup
+    });
+
+    prevButton.addEventListener('click', function () {
+        if (currentIndex > 0) {
+            currentIndex--;
+            showImage(currentIndex);
+        }
+    });
+
+    nextButton.addEventListener('click', function () {
+        if (currentIndex < currentImages.length - 1) {
+            currentIndex++;
+            showImage(currentIndex);
+        }
+    });
+
+    // Tutup modal jika klik di luar area konten modal
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            currentImages = [];
+        }
+    });
+
+    // Tutup modal dengan tombol Escape
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            currentImages = [];
+        }
+    });
+});
+</script>
+@endpush
