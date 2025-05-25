@@ -12,7 +12,45 @@ class APIPropertyController extends Controller
     public function __construct() {
         $this->middleware('auth:api');
     }
+    public function index(Request $request)
+    {
+        $user = auth('api')->user();
+        if (!$user) {
+            // Ini seharusnya tidak terjadi jika middleware auth:api bekerja
+            return response()->json(['error' => 'Unauthorized: No user found'], 401);
+        }
 
+        Log::info('Request to fetch user properties received', [
+            'user_id' => $user->_id, // atau $user->id
+            'query_params' => $request->query()
+        ]);
+
+        // Query dasar untuk mengambil properti milik user yang sedang login
+        $query = UserProperty::where('user_id', $user->_id); // atau $user->id
+
+        // Filter berdasarkan status jika ada parameter 'status' di request
+        if ($request->has('status')) {
+            $statuses = explode(',', $request->query('status'));
+            // Bersihkan nilai status untuk keamanan (opsional tapi bagus)
+            $validStatuses = array_filter(array_map('trim', $statuses), function($status) {
+                return in_array($status, ['draft', 'pendingVerification', 'approved', 'rejected', 'sold', 'archived']);
+            });
+
+            if (!empty($validStatuses)) {
+                $query->whereIn('status', $validStatuses);
+            }
+        }
+
+        // Urutkan berdasarkan tanggal update terbaru (atau created_at)
+        $properties = $query->orderBy('updated_at', 'desc')->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User properties fetched successfully.',
+            'data' => $properties,
+        ]);
+    }
+    
     public function store(Request $request)
     {
         Log::info('User Auth:', ['user' => auth()->user()]);

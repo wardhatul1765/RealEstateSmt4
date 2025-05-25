@@ -8,6 +8,11 @@ use App\Http\Controllers\DataUserController;
 use App\Http\Controllers\PredictionController;
 // use App\Http\Controllers\Auth\RegisteredUserController; // Jika tidak digunakan, bisa dikomentari
 use App\Http\Controllers\ManajemenPropertiController;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -91,3 +96,4 @@ Route::middleware(['auth', 'verified'])->group(function () { // Menambahkan 'ver
     // Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard'); // Duplikat, sudah ada di atas
 
 });
+
