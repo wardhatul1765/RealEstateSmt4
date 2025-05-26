@@ -39,7 +39,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [APIAuthController::class, 'logout']);
     Route::post('/properties', [APIPropertyController::class, 'store']);
     Route::post('/properties/{id}/upload-image', [APIPropertyController::class, 'uploadImage']);
-    Route::put('/properties/{id}', [APIPropertyController::class, 'update']);
+    Route::post('/properties/{id}', [APIPropertyController::class, 'update']);
     Route::get('/user/properties', [APIPropertyController::class, 'index']);
     // Route::post('/upload-images', [APIImageController::class, 'upload']);
 

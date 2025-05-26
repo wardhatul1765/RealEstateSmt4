@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model; // Pastikan ini adalah namespace yang benar untuk MongoDB Eloquent
+use MongoDB\Laravel\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class UserProperty extends Model
@@ -10,7 +10,7 @@ class UserProperty extends Model
     use HasFactory;
 
     protected $connection = 'mongodb';
-    protected $collection = 'user_properties'; // Nama koleksi di MongoDB
+    protected $collection = 'user_properties';
 
     protected $fillable = [
         'title',
@@ -18,36 +18,31 @@ class UserProperty extends Model
         'price',
         'bedrooms',
         'bathrooms',
-        'sizeMin',          // Ini adalah areaSqft dari Flutter
+        'sizeMin',
         'furnishing',
         'status',
         'user_id',
-        'Address',
-        'image',            // Array URL gambar
+        'address',          // <<< PERBAIKAN 1: Ubah menjadi 'address' (huruf kecil)
+        'image',
         'propertyType',
-        'mainView',         // atau 'surroundingView' sesuai dengan nama field yang Anda gunakan di create()
-        'addedOn',// atau 'propertyAge' sesuai dengan nama field yang Anda gunakan di create()
+        'mainView',
+        'listingAgeCategory', // <<< PERBAIKAN 2: Ubah 'addedOn' menjadi 'listingAgeCategory'
         'propertyLabel',
     ];
 
-     protected $guarded = ['id'];
+    protected $guarded = ['id']; // Lebih aman mengosongkan ini jika semua field sudah di $fillable
 
     protected $casts = [
-        'image' => 'array',         // Ini sudah benar
-        'bedrooms' => 'integer',    // Casting eksplisit bisa membantu
+        'image' => 'array',
+        'bedrooms' => 'integer',
         'bathrooms' => 'integer',
-        'price' => 'float',         // atau 'double' atau 'decimal:<jumlah_desimal>'
-        'sizeMin' => 'float',       // atau 'double'
-        'status' => 'boolean',      // Pastikan ini sesuai dengan field di database
+        'price' => 'float',
+        'sizeMin' => 'float',
+        'status' => 'string', // Ini sudah benar
     ];
 
-    /**
-     * Mendapatkan user yang memiliki properti ini.
-     */
     public function user()
     {
-        // Pastikan App\Models\User adalah model User Anda yang benar
-        // dan 'user_id' di UserProperty cocok dengan '_id' (atau primary key) di koleksi User
         return $this->belongsTo(User::class, 'user_id');
     }
 }
