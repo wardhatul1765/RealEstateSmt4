@@ -49,7 +49,7 @@ class ManajemenPropertiController extends Controller
 
         // Mengurutkan berdasarkan yang terbaru dan melakukan paginasi
         // Penting: appends(request()->query()) agar parameter pencarian tetap ada di link pagination
-        $dataProperty = $query->latest('addedOn')->paginate(15)->appends(request()->query());
+        $dataProperty = $query->latest('created_at')->paginate(15)->appends(request()->query());
 
         return view('manajemen-properti.index', compact('dataProperty', 'searchTerm'));
     }
@@ -63,7 +63,7 @@ class ManajemenPropertiController extends Controller
     {
         // Mengambil properti yang statusnya false (belum disetujui/pending)
         // Menggunakan model Property dan field 'status' (boolean)
-        $properties = UserProperty::where('status', false)->paginate(10);
+        $properties = UserProperty::where('status', 'pendingVerification')->paginate(10);
 
         return view('manajemen-properti.persetujuan', compact('properties'));
     }

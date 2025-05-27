@@ -75,7 +75,8 @@
                                 <th class="px-2 py-2 text-center text-xs font-medium uppercase tracking-wider">Img</th>
                                 <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Deskripsi</th>
                                 <th class="px-2 py-2 text-center text-xs font-medium uppercase tracking-wider">Status</th>
-                                <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Added</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Created</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Updated</th> {{-- BARU --}}
                                 <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Aksi</th>
                             </tr>
                         </thead>
@@ -104,7 +105,7 @@
                                     <td class="px-2 py-1 whitespace-nowrap" title="{{$property->propertyLabel}}">{{ Str::limit($property->propertyLabel, 10) ?? '-' }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap">
                                         @php
-                                            $imagesArr = []; // Menggunakan nama variabel yang berbeda untuk kejelasan
+                                            $imagesArr = [];
                                             if ($property->image) {
                                                 $imagesArr = is_array($property->image) ? $property->image : json_decode($property->image, true);
                                                 if (json_last_error() !== JSON_ERROR_NONE && is_string($property->image) && !empty($property->image)) {
@@ -113,23 +114,18 @@
                                                     $imagesArr = [];
                                                 }
                                             }
-                                            $imagesArr = array_values(array_filter($imagesArr)); // Membersihkan nilai kosong/null
+                                            $imagesArr = array_values(array_filter($imagesArr));
                                         @endphp
                                         @if(!empty($imagesArr))
                                             <div class="flex items-center">
-                                                {{-- Pastikan $imagesArr[0] adalah URL yang valid dan symlink storage berfungsi --}}
-                                                {{-- Jika $imagesArr[0] tidak ada, gunakan placeholder. Anda perlu membuat file placeholder.png di public/images --}}
                                                 <img 
                                                     src="{{ $imagesArr[0] ?? asset('images/placeholder.png') }}" 
                                                     alt="Thumb"
-                                                    class="h-6 w-6 object-cover rounded cursor-pointer open-image-gallery"
-                                                    data-images='@json($imagesArr)'
+                                                    class="h-6 w-6 object-cover rounded"
                                                     onerror="handleImageError(this)">
-                                                <button type="button"
-                                                        class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-200 text-xs open-image-gallery ml-1"
-                                                        data-images='{{ json_encode($imagesArr) }}'> {{-- PERUBAHAN DI SINI --}}
-                                                    ({{ count($imagesArr) }})
-                                                </button>
+                                                @if(count($imagesArr) > 0)
+                                                    <span class="text-xs ml-1">({{ count($imagesArr) }})</span>
+                                                @endif
                                             </div>
                                         @else
                                             -
@@ -143,7 +139,10 @@
                                             <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100">Not</span>
                                         @endif
                                     </td>
-                                    <td class="px-2 py-1 whitespace-nowrap">{{ $property->addedOn ? Carbon\Carbon::parse($property->addedOn)->format('d/m/y') : ($property->created_at ? Carbon\Carbon::parse($property->created_at)->format('d/m/y') : '-') }}</td>
+                                    {{-- Menggunakan created_at, diformat d/m/y --}}
+                                    <td class="px-2 py-1 whitespace-nowrap">{{ $property->created_at ? Carbon\Carbon::parse($property->created_at)->format('d/m/y') : '-' }}</td>
+                                    {{-- BARU: Menampilkan updated_at, diformat d/m/y H:i --}}
+                                    <td class="px-2 py-1 whitespace-nowrap">{{ $property->updated_at ? Carbon\Carbon::parse($property->updated_at)->format('d/m/y H:i') : '-' }}</td>
                                     <td class="px-2 py-1 flex space-x-1 whitespace-nowrap">
                                         <button @click="openModal('edit', {{ Js::from($property->id) }})"
                                                 class="px-2 py-0.5 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs">
@@ -158,7 +157,8 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="16" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">Tidak ada data properti yang ditemukan.</td>
+                                    {{-- Menyesuaikan colspan menjadi 17 --}}
+                                    <td colspan="17" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">Tidak ada data properti yang ditemukan.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -199,7 +199,12 @@
                 <form @submit.prevent="submitForm" id="propertyForm" method="POST" action="#" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="_method" id="formMethod" value="POST">
-                    <input type="hidden" name="addedOn" x-model="formData.addedOn">
+                    {{-- Input created_at DIHAPUS karena Laravel otomatis mengelolanya --}}
+                    {{-- <input type="hidden" name="created_at" x-model="formData.created_at"> --}}
+                    
+                    {{-- Jika Anda memiliki field tanggal khusus yang diinput user (misal addedOn), biarkan di sini --}}
+                    {{-- <input type="hidden" name="addedOn" x-model="formData.addedOn"> --}}
+
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                         {{-- Baris 1 --}}
@@ -254,17 +259,8 @@
                             </select>
                         </div>
                         
-                        <!-- {{-- Baris Tambahan untuk Tipe Properti --}}
-                        <div>
-                            <label for="propertyType_form" class="block font-medium text-gray-700 dark:text-gray-300">Tipe Properti</label>
-                            <input type="text" name="propertyType" id="propertyType_form" x-model="formData.propertyType"
-                                   placeholder="Mis: Residential for Sale"
-                                   class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 focus:ring-purple-500 focus:border-purple-500">
-                        </div> -->
-
-
                         {{-- Baris Harga (dibuat span lebih lebar) --}}
-                        <div class="md:col-span-2 lg:col-span-2"> {{-- Sesuaikan span jika perlu --}}
+                        <div class="md:col-span-2 lg:col-span-2">
                             <label for="price_form_input" class="block font-medium text-gray-700 dark:text-gray-300">Harga (AED)</label>
                             <div class="flex items-center space-x-4 my-1">
                                 <label class="flex items-center">
@@ -354,7 +350,6 @@
 
         {{-- Modal Konfirmasi Hapus --}}
         <x-modal name="deleteConfirmModal" :maxWidth="'md'">
-           {{-- ... (Konten Modal Hapus sama seperti sebelumnya) ... --}}
            <div class="p-6 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                 <h2 class="text-lg font-medium mb-2">Konfirmasi Hapus</h2>
                 <p class="mb-1 text-sm text-gray-600 dark:text-gray-300">Anda yakin ingin menghapus properti:</p>
@@ -374,127 +369,24 @@
 
     </div>
 
-    {{-- Modal Galeri Gambar --}}
-    <div id="imageGalleryModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999] hidden p-4">
-        {{-- ... (Konten Modal Galeri Gambar sama seperti sebelumnya) ... --}}
-        <div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-xl relative max-w-xl w-full max-h-[90vh] flex flex-col">
-            <button id="closeGalleryModal" class="absolute top-2 right-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 text-2xl leading-none">&times;</button>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4" id="galleryTitleModal">Galeri Gambar</h3>
-            <div class="flex-grow overflow-hidden flex items-center justify-center mb-4">
-                <img id="galleryImageModalDisplay" src="" alt="Property Image" class="max-w-full max-h-[60vh] object-contain">
-            </div>
-            <div class="flex justify-between items-center">
-                <button id="prevImageModal" class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-500 text-sm">&lt; Prev</button>
-                <span id="imageCounterModal" class="text-sm text-gray-700 dark:text-gray-300"></span>
-                <button id="nextImageModal" class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-500 text-sm">Next &gt;</button>
-            </div>
-        </div>
-    </div>
-
 @push('scripts')
-{{-- Script untuk Galeri Gambar (Vanilla JS) --}}
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const imageGalleryModalElement = document.getElementById('imageGalleryModal');
-    if (imageGalleryModalElement) { 
-        const galleryImageElement = document.getElementById('galleryImageModalDisplay');
-        const closeButtonElement = document.getElementById('closeGalleryModal');
-        const prevButtonElement = document.getElementById('prevImageModal');
-        const nextButtonElement = document.getElementById('nextImageModal');
-        const imageCounterElement = document.getElementById('imageCounterModal');
-        
-        let currentGalleryImages = [];
-        let currentGalleryIndex = 0;
-
-        function showGalleryImage(index) {
-            if (!galleryImageElement || !imageCounterElement || !prevButtonElement || !nextButtonElement) return;
-            if (currentGalleryImages.length === 0 || index < 0 || index >= currentGalleryImages.length) return;
-            galleryImageElement.src = currentGalleryImages[index];
-            imageCounterElement.textContent = `${index + 1} / ${currentGalleryImages.length}`;
-            prevButtonElement.disabled = index === 0;
-            nextButtonElement.disabled = index === currentGalleryImages.length - 1;
-
-            if (currentGalleryImages.length <= 1) {
-                prevButtonElement.classList.add('hidden');
-                nextButtonElement.classList.add('hidden');
-                imageCounterElement.classList.add('hidden');
-            } else {
-                prevButtonElement.classList.remove('hidden');
-                nextButtonElement.classList.remove('hidden');
-                imageCounterElement.classList.remove('hidden');
-            }
-        }
-
-        function openImageGalleryModal(imagesArray) {
-             currentGalleryImages = imagesArray;
-            if (Array.isArray(currentGalleryImages) && currentGalleryImages.length > 0) {
-                currentGalleryIndex = 0;
-                showGalleryImage(currentGalleryIndex);
-                imageGalleryModalElement.classList.remove('hidden');
-                document.body.classList.add('overflow-hidden');
-            }
-        }
-        
-        function closeImageGalleryModal() {
-            imageGalleryModalElement.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-            currentGalleryImages = [];
-            if(galleryImageElement) galleryImageElement.src = "";
-        }
-
-        document.body.addEventListener('click', function(event) {
-            const trigger = event.target.closest('.open-image-gallery');
-            if (trigger) {
-                const imagesData = trigger.dataset.images;
-                if (imagesData) {
-                    try {
-                        const parsedImages = JSON.parse(imagesData);
-                        openImageGalleryModal(parsedImages);
-                    } catch (e) {
-                        console.error('Error parsing image data for gallery:', e, imagesData);
-                    }
-                }
-            }
-        });
-
-        if(closeButtonElement) closeButtonElement.addEventListener('click', closeImageGalleryModal);
-        if(prevButtonElement) prevButtonElement.addEventListener('click', () => { 
-            if (currentGalleryIndex > 0) { currentGalleryIndex--; showGalleryImage(currentGalleryIndex); }
-        });
-        if(nextButtonElement) nextButtonElement.addEventListener('click', () => { 
-            if (currentGalleryIndex < currentGalleryImages.length - 1) { currentGalleryIndex++; showGalleryImage(currentGalleryIndex); }
-        });
-        if(imageGalleryModalElement) imageGalleryModalElement.addEventListener('click', (event) => { 
-            if (event.target === imageGalleryModalElement) closeImageGalleryModal();
-        });
-        document.addEventListener('keydown', (event) => { 
-            if (event.key === 'Escape' && imageGalleryModalElement && !imageGalleryModalElement.classList.contains('hidden')) {
-                closeImageGalleryModal();
-            }
-        });
-    }
-});
-</script>
-
-{{-- Script untuk Alpine.js Komponen masterProperti --}}
 <script>
 function masterProperti() {
     return {
         modalTitle: 'Form Properti',
-        formAction: '', // URL untuk submit form (store atau update)
-        isSubmitting: false, // Status apakah form sedang disubmit
-        isPredicting: false, // Status untuk prediksi harga
-        ajaxErrors: {}, // Untuk menyimpan error validasi dari server
-        predictionError: '', // Pesan error khusus untuk prediksi harga
-        deleteError: '', // Pesan error khusus untuk proses hapus
-        currentPropertyId: null, // ID properti yang sedang diedit
+        formAction: '', 
+        isSubmitting: false, 
+        isPredicting: false, 
+        ajaxErrors: {}, 
+        predictionError: '', 
+        deleteError: '', 
+        currentPropertyId: null, 
         propertyToDeleteId: null,
         propertyToDeleteUrl: '',
         propertyToDeleteName: '',
-        isDeleting: false, // Status apakah proses hapus sedang berjalan
-        csrfToken: '', // CSRF token Laravel
+        isDeleting: false, 
+        csrfToken: '', 
 
-        // Opsi-opsi untuk dropdown (sesuai kode Abang)
         keywordOptions: [
             { value: '', text: 'Pilih Label Properti...' }, { value: 'luxury', text: 'Mewah (Luxury)' },
             { value: 'furnished', text: 'Berperabot (Furnished)' }, { value: 'spacious', text: 'Luas (Spacious)' },
@@ -509,28 +401,27 @@ function masterProperti() {
             { value: 'lake view', text: 'Pemandangan Danau (Lake View)' },{ value: 'pool view', text: 'Pemandangan Kolam Renang (Pool View)' },
             { value: 'canal view', text: 'Pemandangan Kanal (Canal View)' }
         ],
-        // Mapping untuk API prediksi harga (sesuai kode Abang)
         viewTypeMapForPrediction: { '': null, 'sea view': 0, 'burj khalifa view': 1, 'golf course view': 2, 'community view': 3, 'city view': 4, 'lake view': 5, 'pool view': 6, 'canal view': 7 },
         keywordMapForPrediction: { '': null, 'luxury': 0, 'furnished': 1, 'spacious': 2, 'prime': 3, 'studio': 4, 'penthouse': 5, 'investment': 6, 'villa': 7, 'downtown': 8 },
         furnishingMapForPrediction: { '': null, 'Yes': 0, 'No': 1, 'Partly': 2 },
 
-        // Data utama untuk form, di-bind dengan x-model
         formData: {
             title: '', Address: '', bedrooms: '', bathrooms: '', price: '',
-            sizeMin: '', furnishing: '', propertyType: 'Residential for Sale', // Default tipe properti
+            sizeMin: '', furnishing: '', propertyType: 'Residential for Sale', 
             status: true, mainView: '', propertyLabel: '', description: '',
-            addedOn: '', price_mode: 'manual',
-            images: [], // Untuk menyimpan file gambar BARU yang dipilih (objek File)
-            existingImages: [] // Untuk menyimpan URL gambar LAMA (pas mode edit)
+            // created_at DIHAPUS dari formData karena diurus Laravel
+            // addedOn bisa ditambahkan di sini JIKA merupakan field yang diinput/dimanage manual oleh user
+            // Misal: addedOn: '', 
+            price_mode: 'manual',
+            images: [], 
+            existingImages: [] 
         },
 
-        // Inisialisasi komponen
         init() {
             this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('#propertyForm input[name="_token"]')?.value;
-            const serverDeleteError = '{{ session("error_delete") }}'; // Ambil error hapus dari session (jika ada)
+            const serverDeleteError = '{{ session("error_delete") }}'; 
             if (serverDeleteError) { this.deleteError = serverDeleteError; setTimeout(() => this.deleteError = '', 5000); }
 
-            // Watcher untuk field yang mempengaruhi prediksi harga (sesuai kode Abang)
             const fieldsToWatch = ['bedrooms', 'bathrooms', 'furnishing', 'sizeMin', 'mainView', 'propertyLabel', 'status'];
             fieldsToWatch.forEach(field => {
                 this.$watch(`formData.${field}`, (newValue, oldValue) => {
@@ -549,75 +440,70 @@ function masterProperti() {
             });
         },
 
-        getTodayDate() { return new Date().toISOString().slice(0,10); }, // Format YYYY-MM-DD
+        getTodayDate() { return new Date().toISOString().slice(0,10); }, 
 
-        // Fungsi untuk menangani pemilihan file gambar
         handleImageFiles(event) {
             const files = Array.from(event.target.files);
-            // Filter hanya file gambar dan batasi jumlahnya (misal maks 10)
             this.formData.images = files.filter(file => file.type.startsWith('image/')).slice(0, 10);
             if (files.length !== this.formData.images.length) {
                 this.ajaxErrors = { ...this.ajaxErrors, images: ['Beberapa file bukan gambar atau melebihi batas unggah (maks 10).'] };
             } else { if (this.ajaxErrors.images) delete this.ajaxErrors.images; }
-            event.target.value = null; // Reset input file agar bisa pilih file yang sama lagi
+            event.target.value = null; 
         },
 
-        // Fungsi untuk menghapus gambar dari daftar preview gambar BARU
         removeImage(index) { this.formData.images.splice(index, 1); },
 
-        // Fungsi untuk membuka modal (tambah atau edit)
         openModal(mode, propertyId = null) {
             console.log('Buka modal. Mode:', mode, 'ID:', propertyId);
             this.ajaxErrors = {};
             this.predictionError = '';
-            this.currentPropertyId = propertyId; // Set ID properti saat ini
+            this.currentPropertyId = propertyId; 
 
             if (mode === 'add') {
-                this.resetAlpineFormData(); // Kosongkan form
+                this.resetAlpineFormData(); 
                 this.modalTitle = 'Tambah Properti Baru';
-                this.formAction = '{{ route("data-master.properti.store") }}'; // URL untuk simpan baru
+                this.formAction = '{{ route("data-master.properti.store") }}'; 
                 const formMethodEl = document.getElementById('formMethod');
-                if(formMethodEl) formMethodEl.value = 'POST'; // Method untuk form
+                if(formMethodEl) formMethodEl.value = 'POST'; 
                 this.$dispatch('open-modal', 'propertyFormModal');
             } else if (mode === 'edit' && propertyId) {
-                this.resetAlpineFormData(); // Kosongkan form dulu
+                this.resetAlpineFormData(); 
                 this.modalTitle = 'Edit Properti';
-                this.formAction = `{{ url('data-master/properti') }}/${propertyId}`; // URL untuk update
+                this.formAction = `{{ url('data-master/properti') }}/${propertyId}`; 
                 const formMethodEl = document.getElementById('formMethod');
-                if(formMethodEl) formMethodEl.value = 'PUT'; // Method untuk form (Laravel akan baca _method)
-                this.$dispatch('open-modal', 'propertyFormModal'); // Buka modalnya dulu
-                this.fetchPropertyData(propertyId); // Baru ambil data properti untuk diisi ke form
+                if(formMethodEl) formMethodEl.value = 'PUT'; 
+                this.$dispatch('open-modal', 'propertyFormModal'); 
+                this.fetchPropertyData(propertyId); 
             } else {
                 console.warn('Panggilan openModal tidak valid:', mode, propertyId);
             }
         },
 
-        // Fungsi untuk menutup modal utama
         closeModal() {
             this.$dispatch('close-modal', 'propertyFormModal');
-            this.currentPropertyId = null; // Reset ID properti
+            this.currentPropertyId = null; 
         },
 
-        // Fungsi untuk mengosongkan/mereset data form di Alpine
         resetAlpineFormData() {
-            const today = this.getTodayDate();
+            // const today = this.getTodayDate(); // Tidak lagi diperlukan untuk created_at
             this.formData = {
                 title: '', Address: '', bedrooms: '', bathrooms: '', price: '',
                 sizeMin: '', furnishing: '', propertyType: 'Residential for Sale',
                 status: true, mainView: '', propertyLabel: '', description: '',
-                addedOn: today, price_mode: 'manual', images: [], existingImages: []
+                // created_at DIHAPUS
+                // Jika ada addedOn yang manual: addedOn: today,
+                price_mode: 'manual', images: [], existingImages: []
             };
             const imagesUploadInput = document.getElementById('images_upload_input');
-            if (imagesUploadInput) imagesUploadInput.value = ''; // Kosongkan juga input file asli
+            if (imagesUploadInput) imagesUploadInput.value = ''; 
         },
 
-        // Fungsi untuk mengambil data properti dari server (untuk mode edit)
         async fetchPropertyData(id) {
-            this.isSubmitting = true; // Bisa pakai loading state sendiri kalau mau
+            this.isSubmitting = true; 
             
             try {
                 const baseUrl = '{{ url("data-master/properti") }}';
-                const url = `${baseUrl}/${id}/edit-data`; // Route GET untuk ambil data by ID
+                const url = `${baseUrl}/${id}/edit-data`; 
                 console.log('Ambil data edit dari URL:', url);
 
                 const response = await fetch(url);
@@ -627,9 +513,8 @@ function masterProperti() {
                     catch (e) { errorData = { message: `Gagal mengambil data properti. Status: ${response.status} - ${response.statusText}` }; }
                     throw new Error(errorData.message || `Kesalahan HTTP! status: ${response.status}`);
                 }
-                const data = await response.json(); // Data properti dari server
+                const data = await response.json(); 
 
-                // Isi this.formData dengan data dari server
                 this.formData.title = data.title || '';
                 this.formData.Address = data.Address || '';
                 this.formData.bedrooms = data.bedrooms === null ? '' : data.bedrooms;
@@ -638,35 +523,38 @@ function masterProperti() {
                 this.formData.sizeMin = data.sizeMin === null ? '' : data.sizeMin;
                 this.formData.furnishing = data.furnishing || '';
                 this.formData.propertyType = data.propertyType || 'Residential for Sale';
-                this.formData.status = !!data.status; // Konversi 0/1 dari server jadi true/false untuk checkbox
+                this.formData.status = !!data.status; 
                 this.formData.mainView = data.mainView || '';
                 this.formData.propertyLabel = data.propertyLabel || '';
                 this.formData.description = data.description || '';
-                this.formData.addedOn = data.addedOn ? new Date(data.addedOn).toISOString().split('T')[0] : this.getTodayDate();
-                this.formData.price_mode = 'manual'; // Default ke manual pas edit
+                // created_at DIHAPUS dari pengisian formData, karena tidak diubah oleh user
+                // Jika ada addedOn yang manual, isi di sini:
+                // this.formData.addedOn = data.addedOn ? new Date(data.addedOn).toISOString().split('T')[0] : this.getTodayDate();
+                this.formData.price_mode = 'manual'; 
 
-                // Proses gambar yang sudah ada (existingImages)
                 let existingImagesFromServer = [];
-                if (data.image) { // 'image' dari server bisa jadi array, JSON string, atau string biasa
+                if (data.image) { 
                     if (Array.isArray(data.image)) { existingImagesFromServer = data.image; }
                     else if (typeof data.image === 'string') {
                         try { existingImagesFromServer = JSON.parse(data.image); }
-                        catch (e) { // Kalau bukan JSON valid, coba split pakai koma atau anggap string tunggal
+                        catch (e) { 
                             if (data.image.includes(',')) { existingImagesFromServer = data.image.split(',').map(s => s.trim()).filter(s => s); }
                             else if (data.image.trim() !== '') { existingImagesFromServer = [data.image.trim()]; }
                         }
                     }
                 }
                 this.formData.existingImages = existingImagesFromServer.filter(imgUrl => typeof imgUrl === 'string' && imgUrl.length > 0);
-                this.formData.images = []; // Kosongkan pilihan gambar baru
+                this.formData.images = []; 
             } catch (error) {
                 console.error('Error di fetchPropertyData:', error);
+                if (!this.ajaxErrors.general || !Array.isArray(this.ajaxErrors.general)) {
+                    this.ajaxErrors.general = [];
+                }
                 this.ajaxErrors.general.push(error.message || 'Tidak dapat memuat data properti.');
             }
             finally { this.isSubmitting = false; }
         },
 
-        // Fungsi untuk mendapatkan prediksi harga (sesuai kode Abang)
         async getPredictedPrice() {
             this.isPredicting = true;
             this.predictionError = '';
@@ -735,18 +623,13 @@ function masterProperti() {
             }
         },
 
-        // *** INI FUNGSI UTAMA UNTUK SIMPAN/UPDATE DATA ***
         async submitForm() {
             this.isSubmitting = true;
             this.ajaxErrors = {};
-            // this.predictionError = ''; // Bisa dikosongkan juga di sini
-            // this.deleteError = '';
 
             const formElement = document.getElementById('propertyForm');
-            const formDataToSend = new FormData(formElement); // Ambil _token dan _method dari form
+            const formDataToSend = new FormData(formElement); 
 
-            // Set field lain dari this.formData ke formDataToSend
-            // Ini lebih aman karena this.formData adalah "single source of truth"
             formDataToSend.set('title', this.formData.title);
             formDataToSend.set('Address', this.formData.Address);
             formDataToSend.set('bedrooms', this.formData.bedrooms);
@@ -758,40 +641,23 @@ function masterProperti() {
             formDataToSend.set('mainView', this.formData.mainView);
             formDataToSend.set('propertyLabel', this.formData.propertyLabel);
             formDataToSend.set('description', this.formData.description);
-            formDataToSend.set('addedOn', this.formData.addedOn);
-
-            // Konversi status boolean ke '1' atau '0'
+            // created_at DIHAPUS dari pengiriman form
+            // Jika ada addedOn yang manual, tambahkan di sini:
+            // formDataToSend.set('addedOn', this.formData.addedOn);
             formDataToSend.set('status', this.formData.status ? '1' : '0');
-
-            // Hapus dulu file 'images[]' yang mungkin sudah ada di formDataToSend dari input file asli
-            // karena kita akan append dari this.formData.images
             formDataToSend.delete('images[]');
 
-            // Tambahkan file gambar BARU yang dipilih
             if (this.formData.images && this.formData.images.length > 0) {
                 this.formData.images.forEach((file) => {
                     formDataToSend.append('images[]', file, file.name);
                 });
             }
-
-            // Untuk mode edit, pastikan _method adalah PUT (sudah di-set di hidden input oleh openModal)
-            // Jika mau lebih eksplisit:
-            // if (this.currentPropertyId) {
-            //     formDataToSend.set('_method', 'PUT');
-            // } else {
-            //     formDataToSend.set('_method', 'POST');
-            // }
-            // Tapi karena `new FormData(formElement)` sudah mengambilnya, ini tidak wajib.
-
+            
             console.log('Data yang akan dikirim ke server:', Object.fromEntries(formDataToSend));
-            // Untuk debug file:
-            // for (let pair of formDataToSend.entries()) {
-            //    console.log(pair[0]+ ', ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
-            // }
 
             try {
                 const response = await fetch(this.formAction, {
-                    method: 'POST', // Selalu POST untuk FormData dengan _method
+                    method: 'POST', 
                     headers: {
                         'X-CSRF-TOKEN': this.csrfToken,
                         'Accept': 'application/json',
@@ -804,43 +670,39 @@ function masterProperti() {
                 if (!response.ok) {
                     if (response.status === 422 && result.errors) {
                         this.ajaxErrors = result.errors;
-                        if (result.message) this.ajaxErrors.general = [result.message];
-                         // Cari field error pertama dan fokus ke sana (opsional)
+                        if (result.message) {
+                            if (!this.ajaxErrors.general || !Array.isArray(this.ajaxErrors.general)) this.ajaxErrors.general = [];
+                            this.ajaxErrors.general.push(result.message);
+                        }
                         const firstErrorField = Object.keys(result.errors)[0];
                         if (firstErrorField) {
-                            const el = document.getElementById(firstErrorField + '_form'); // Asumsi ID input: namafield_form
+                            const el = document.getElementById(firstErrorField + '_form'); 
                             if (el) el.focus();
                         }
                     } else {
-                        this.ajaxErrors = { general: [result.message || `Terjadi error (Status: ${response.status}). Coba lagi.`] };
+                         if (!this.ajaxErrors.general || !Array.isArray(this.ajaxErrors.general)) this.ajaxErrors.general = [];
+                        this.ajaxErrors.general = [result.message || `Terjadi error (Status: ${response.status}). Coba lagi.`];
                     }
-                    return; // Stop kalau ada error
+                    return; 
                 }
-
-                // Jika SUKSES
                 this.closeModal();
-                // Notifikasi sukses bisa pakai session flash Laravel dengan reload, atau notif Alpine.
-                // Untuk sementara, reload saja:
                 window.location.reload();
-                // Contoh notifikasi Alpine (perlu komponen notifikasi terpisah):
-                // this.$dispatch('shownotification', { message: result.message || 'Data berhasil disimpan!', type: 'success' });
-
 
             } catch (error) {
                 console.error('Error submit form:', error);
-                this.ajaxErrors = { general: ['Tidak bisa terhubung ke server. Cek koneksi dan coba lagi.'] };
+                if (!this.ajaxErrors.general || !Array.isArray(this.ajaxErrors.general)) this.ajaxErrors.general = [];
+                this.ajaxErrors.general = ['Tidak bisa terhubung ke server. Cek koneksi dan coba lagi.'];
             } finally {
                 this.isSubmitting = false;
             }
         },
 
-        // Fungsi untuk membuka modal konfirmasi hapus
         openDeleteModal(url, id, name) {
             this.propertyToDeleteUrl = url;
             this.propertyToDeleteId = id;
             this.propertyToDeleteName = name || 'Properti Ini';
-            this.deleteError = ''; // Kosongkan error sebelumnya
-            this.ajaxErrors = {}; // Kosongkan error validasi AJAX sebelumnya
+            this.deleteError = ''; 
+            this.ajaxErrors = {}; 
             this.$dispatch('open-modal', 'deleteConfirmModal');
         },
 
@@ -848,7 +710,6 @@ function masterProperti() {
             this.$dispatch('close-modal', 'deleteConfirmModal');
         },
 
-        // Fungsi untuk konfirmasi dan eksekusi hapus
         async confirmDelete() {
             if (!this.propertyToDeleteUrl) return;
             this.isDeleting = true;
@@ -857,39 +718,26 @@ function masterProperti() {
 
             try {
                 const response = await fetch(this.propertyToDeleteUrl, {
-                    method: 'POST', // Gunakan POST dan _method: 'DELETE' jika form based
-                                   // atau bisa langsung 'DELETE' jika server support
+                    method: 'POST', 
                     headers: {
                         'X-CSRF-TOKEN': this.csrfToken,
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json', // Jika kirim body JSON
+                        'Content-Type': 'application/json', 
                     },
-                    body: JSON.stringify({ // Kirim _method sebagai JSON body jika pakai POST
+                    body: JSON.stringify({ 
                         _method: 'DELETE'
                     })
-                    // Jika pakai FormData:
-                    // body: new FormData(document.getElementById('deleteForm')) // jika ada form khusus delete
-                    // atau buat FormData manual:
-                    // const deleteFormData = new FormData();
-                    // deleteFormData.append('_method', 'DELETE');
-                    // body: deleteFormData,
                 });
 
                 const result = await response.json();
 
                 if (!response.ok) {
                     this.deleteError = result.message || `Gagal menghapus (Status: ${response.status})`;
-                    // Jika ada error validasi dari backend (jarang untuk delete, tapi mungkin)
                     if (result.errors) this.ajaxErrors = result.errors;
                     return;
                 }
-
-                // Jika SUKSES HAPUS
                 this.closeDeleteModal();
-                // Reload halaman untuk update daftar
                 window.location.reload();
-                // Atau bisa update UI secara manual & tampilkan notifikasi
-                // this.$dispatch('shownotification', { message: result.message || 'Data berhasil dihapus!', type: 'success' });
 
             } catch (error) {
                 console.error('Error hapus properti:', error);
@@ -898,6 +746,17 @@ function masterProperti() {
                 this.isDeleting = false;
             }
         }
+    }
+}
+
+if (typeof window.handleImageError === 'undefined') {
+    window.handleImageError = function(imgElement) {
+        console.warn('Error loading image, using placeholder for:', imgElement.src);
+        const placeholder = "{{ asset('images/placeholder.png') }}"; 
+        if (imgElement.src !== placeholder) { 
+            imgElement.src = placeholder;
+        }
+        imgElement.onerror = null; 
     }
 }
 </script>

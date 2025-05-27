@@ -60,7 +60,7 @@ class DataMasterController extends Controller
             'propertyType' => 'nullable|string|max:100', // Sesuai data Alpine
             'furnishing' => 'nullable|string|in:Yes,No,Partly',
             'status' => 'required|in:0,1', // Input dari form akan '0' atau '1'
-            'addedOn' => 'nullable|date_format:Y-m-d',
+            'created_at' => 'nullable|date_format:Y-m-d',
             'mainView' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:5000', // Tambah max length jika perlu
             'propertyLabel' => 'nullable|string|max:255',
@@ -142,47 +142,47 @@ class DataMasterController extends Controller
 
         $validatedData = $validator->validated();
 
-        // Proses upload gambar jika ada gambar BARU yang diunggah
-        if ($request->hasFile('images')) {
-            // 1. Hapus gambar lama dari storage (jika ada)
-            // Model UserProperty punya $casts 'image' => 'array', jadi $property->image sudah berupa array URL
-            if ($property->image && is_array($property->image)) {
-                foreach ($property->image as $oldImageUrl) {
-                    // Konversi URL ke path storage relatif (misal: public/properties/namafile.jpg)
-                    $publicPath = parse_url($oldImageUrl, PHP_URL_PATH); // Dapatkan path dari URL (misal: /storage/properties/file.jpg)
-                    $storagePath = 'public' . str_replace(Storage::url(''), '', $publicPath); // Hapus base URL storage, sisakan path relatif ke 'public'
-                                                                                              // Atau cara lain jika Storage::url('') tidak sesuai:
-                                                                                              // $storagePath = 'public' . substr($publicPath, strlen('/storage'));
-                    if (Storage::exists($storagePath)) {
-                        Storage::delete($storagePath);
-                    } else {
-                        Log::warning("File gambar lama tidak ditemukan untuk dihapus: " . $storagePath . " dari URL: " . $oldImageUrl);
-                    }
-                }
-            }
+        // // Proses upload gambar jika ada gambar BARU yang diunggah
+        // if ($request->hasFile('images')) {
+        //     // 1. Hapus gambar lama dari storage (jika ada)
+        //     // Model UserProperty punya $casts 'image' => 'array', jadi $property->image sudah berupa array URL
+        //     if ($property->image && is_array($property->image)) {
+        //         foreach ($property->image as $oldImageUrl) {
+        //             // Konversi URL ke path storage relatif (misal: public/properties/namafile.jpg)
+        //             $publicPath = parse_url($oldImageUrl, PHP_URL_PATH); // Dapatkan path dari URL (misal: /storage/properties/file.jpg)
+        //             $storagePath = 'public' . str_replace(Storage::url(''), '', $publicPath); // Hapus base URL storage, sisakan path relatif ke 'public'
+        //                                                                                       // Atau cara lain jika Storage::url('') tidak sesuai:
+        //                                                                                       // $storagePath = 'public' . substr($publicPath, strlen('/storage'));
+        //             if (Storage::exists($storagePath)) {
+        //                 Storage::delete($storagePath);
+        //             } else {
+        //                 Log::warning("File gambar lama tidak ditemukan untuk dihapus: " . $storagePath . " dari URL: " . $oldImageUrl);
+        //             }
+        //         }
+        //     }
 
-            // 2. Simpan gambar baru
-            $newImagePaths = [];
-            foreach ($request->file('images') as $file) {
-                $path = $file->store('public/properties');
-                $newImagePaths[] = Storage::url($path);
-            }
-            $validatedData['image'] = $newImagePaths; // Timpa dengan array URL gambar baru
-        } else {
-            // Jika tidak ada file gambar baru yang diunggah, jangan ubah field 'image'
-            // Hapus 'images' dari $validatedData agar tidak menimpa data 'image' lama dengan null/empty.
-            // $validatedData['image'] akan tetap berisi path dari $validator->validated() jika 'images' tidak ada di request.
-            // Kita hanya ingin update 'image' jika ada file baru.
-            // Jadi, jika tidak ada file baru, $validatedData['image'] tidak perlu di-set,
-            // karena $property->image sudah berisi data lama.
-            // Namun, karena $validator membuat 'images' bisa jadi array kosong jika dikirim,
-            // lebih aman untuk tidak menyentuh 'image' jika tidak ada file baru.
-            unset($validatedData['images']); // Hapus key 'images' agar kolom 'image' di DB tidak terupdate jika tidak ada file baru
-                                            // Kolom 'image' akan tetap pakai nilai lama dari $property.
-                                            // Ini hanya jika $validatedData['image'] tidak ada di $fillable atau $guarded
-                                            // dan kita update $property->fill($validatedData); $property->save();
-                                            // Jika pakai $property->update($validatedData), field 'image' yg tidak ada di $validatedData tidak akan diubah.
-        }
+        //     // 2. Simpan gambar baru
+        //     $newImagePaths = [];
+        //     foreach ($request->file('images') as $file) {
+        //         $path = $file->store('public/properties');
+        //         $newImagePaths[] = Storage::url($path);
+        //     }
+        //     $validatedData['image'] = $newImagePaths; // Timpa dengan array URL gambar baru
+        // } else {
+        //     // Jika tidak ada file gambar baru yang diunggah, jangan ubah field 'image'
+        //     // Hapus 'images' dari $validatedData agar tidak menimpa data 'image' lama dengan null/empty.
+        //     // $validatedData['image'] akan tetap berisi path dari $validator->validated() jika 'images' tidak ada di request.
+        //     // Kita hanya ingin update 'image' jika ada file baru.
+        //     // Jadi, jika tidak ada file baru, $validatedData['image'] tidak perlu di-set,
+        //     // karena $property->image sudah berisi data lama.
+        //     // Namun, karena $validator membuat 'images' bisa jadi array kosong jika dikirim,
+        //     // lebih aman untuk tidak menyentuh 'image' jika tidak ada file baru.
+        //     unset($validatedData['images']); // Hapus key 'images' agar kolom 'image' di DB tidak terupdate jika tidak ada file baru
+        //                                     // Kolom 'image' akan tetap pakai nilai lama dari $property.
+        //                                     // Ini hanya jika $validatedData['image'] tidak ada di $fillable atau $guarded
+        //                                     // dan kita update $property->fill($validatedData); $property->save();
+        //                                     // Jika pakai $property->update($validatedData), field 'image' yg tidak ada di $validatedData tidak akan diubah.
+        // }
 
         // 'status' dari request adalah '0' atau '1', akan di-cast jadi boolean oleh Model
         // $validatedData['status'] = $request->input('status') === '1'; // Sudah ditangani $casts

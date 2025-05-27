@@ -69,7 +69,7 @@
                                 <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Label</th>
                                 <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Desc.</th>
                                 <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Image</th>
-                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Added</th>
+                                <!-- <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Added</th> -->
                                 <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                 <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                             </tr>
@@ -133,7 +133,7 @@
                                             -
                                         @endif
                                     </td>
-                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">
+                                    <!-- <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">
                                         @if($property->addedOn)
                                             {{ \Carbon\Carbon::parse($property->addedOn)->format('d/m/y') }}
                                         @elseif($property->created_at)
@@ -141,7 +141,7 @@
                                         @else
                                             -
                                         @endif
-                                    </td>
+                                    </td> -->
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-yellow-600 dark:text-yellow-400">
                                         Pending
                                     </td>

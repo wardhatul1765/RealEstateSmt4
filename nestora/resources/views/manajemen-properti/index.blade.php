@@ -69,7 +69,7 @@
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Furn.</th>
                                 <th scope="col" class="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
-                                <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Added</th>
+                                <!-- <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Added</th> -->
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">View</th>
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Label</th>
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Image</th>
@@ -106,30 +106,30 @@
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100 text-center">
                                         @if($property->status === 'verified' || $property->status === true || $property->status === 1 || $property->status === '1')
                                             <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100">
-                                                Ver
+                                                Verified
                                             </span>
                                         @elseif($property->status === 'pending')
                                             <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100">
-                                                Pend
+                                                Pending
                                             </span>
                                         @elseif($property->status === 'rejected')
                                             <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100">
-                                                Rej
+                                                Rejected
                                             </span>
                                         @else
-                                             <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100">
+                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100">
                                                 {{ $property->status ? Str::limit(ucfirst(strtolower($property->status)),3) : '-' }}
                                             </span>
                                         @endif
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{$property->propertyType}}">{{ Str::limit($property->propertyType,10) }}</td>
-                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">
+                                    <!-- <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">
                                         @if($property->addedOn)
                                             {{ \Carbon\Carbon::parse($property->addedOn)->format('d/m/y') }}
                                         @else
                                             -
                                         @endif
-                                    </td>
+                                    </td> -->
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{ $property->mainView }}">{{ Str::limit($property->mainView,10) ?? '-' }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{ $property->propertyLabel }}">{{ Str::limit($property->propertyLabel,10) ?? '-' }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">
@@ -155,14 +155,11 @@
                                         @if(!empty($images))
                                             <div class="flex items-center">
                                                 <img src="{{ $images[0] }}" alt="Thumb"
-                                                     class="h-6 w-6 object-cover rounded cursor-pointer open-image-gallery"
-                                                     data-images="{{ htmlspecialchars(json_encode($images), ENT_QUOTES, 'UTF-8') }}"
-                                                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('ml-1'); this.nextElementSibling.textContent = 'N/A';">
-                                                <button type="button"
-                                                        class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-200 text-xs open-image-gallery ml-1"
-                                                        data-images="{{ htmlspecialchars(json_encode($images), ENT_QUOTES, 'UTF-8') }}">
-                                                    ({{ count($images) }})
-                                                </button>
+                                                     class="h-6 w-6 object-cover rounded" {{-- DIHAPUS: cursor-pointer open-image-gallery --}}
+                                                     {{-- DIHAPUS: data-images="{{ htmlspecialchars(json_encode($images), ENT_QUOTES, 'UTF-8') }}" --}}
+                                                     onerror="this.style.display='none'; if(this.nextElementSibling && this.nextElementSibling.tagName === 'SPAN') { this.nextElementSibling.classList.remove('ml-1'); this.nextElementSibling.textContent = 'N/A'; } else { const naSpan = document.createElement('span'); naSpan.textContent = ' N/A'; this.parentElement.appendChild(naSpan); }">
+                                                {{-- Tombol diganti dengan span untuk count --}}
+                                                <span class="text-xs ml-1">({{ count($images) }})</span>
                                             </div>
                                         @else
                                             -
@@ -210,6 +207,8 @@
         </div>
     </div>
 
+    {{-- Modal Galeri Gambar DIHAPUS/DIKOMENTARI --}}
+    {{--
     <div id="imageGalleryModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden p-4">
         <div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-xl relative max-w-xl w-full max-h-[90vh] flex flex-col">
             <button id="closeGalleryModal" class="absolute top-2 right-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 text-2xl leading-none">&times;</button>
@@ -224,12 +223,13 @@
             </div>
         </div>
     </div>
-
+    --}}
 </x-app-layout>
 
 @push('scripts')
+{{-- JavaScript untuk modal galeri DIHAPUS/DIKOMENTARI --}}
+{{--
 <script>
-// JavaScript untuk modal galeri (Sama seperti sebelumnya, tidak perlu diubah)
 document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('imageGalleryModal');
     const galleryImage = document.getElementById('galleryImage');
@@ -245,8 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function showImage(index) {
         if (currentImages.length === 0 || index < 0 || index >= currentImages.length) {
             // console.warn('Invalid index or no images to show:', index, currentImages);
-            // Optionally hide modal or show placeholder if images array is bad
-             if (currentImages.length === 0 && !modal.classList.contains('hidden')) {
+            if (currentImages.length === 0 && !modal.classList.contains('hidden')) {
                 closeModal();
             }
             return;
@@ -324,4 +323,5 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
+--}}
 @endpush
