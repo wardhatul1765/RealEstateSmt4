@@ -36,6 +36,7 @@ Route::post('/refresh', [APIAuthController::class, 'refresh']);
 
 Route::middleware('auth:api')->group(function () {
     Route::get('/profile', [APIAuthController::class, 'profile']);
+    Route::put('/profile', [APIAuthController::class, 'updateUserProfile']);
     Route::post('/logout', [APIAuthController::class, 'logout']);
     Route::post('/properties', [APIPropertyController::class, 'store']);
     Route::post('/properties/{id}/upload-image', [APIPropertyController::class, 'uploadImage']);

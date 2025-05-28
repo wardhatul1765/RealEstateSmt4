@@ -7,15 +7,15 @@ return [
     | Authentication Defaults
     |--------------------------------------------------------------------------
     |
-    | This option controls the default authentication "guard" and password
-    | reset options for your application. You may change these defaults
-    | as required, but they're a perfect start for most applications.
+    | Opsi ini mengontrol "guard" otentikasi default dan opsi reset password
+    | untuk aplikasi Anda. Anda dapat mengubah default ini sesuai kebutuhan.
+    | Jika admin panel Anda adalah yang utama menggunakan session, 'web' adalah default yang baik.
     |
     */
 
     'defaults' => [
-        'guard' => 'web',
-        'passwords' => 'admins',
+        'guard' => 'web', // Tentukan SATU default guard, misal 'web' untuk admin panel
+        'passwords' => 'admins', // Default password broker, sesuaikan dengan provider admin
     ],
 
     /*
@@ -23,58 +23,42 @@ return [
     | Authentication Guards
     |--------------------------------------------------------------------------
     |
-    | Next, you may define every authentication guard for your application.
-    | Of course, a great default configuration has been defined for you
-    | here which uses session storage and the Eloquent user provider.
-    |
-    | All authentication drivers have a user provider. This defines how the
-    | users are actually retrieved out of your database or other storage
-    | mechanisms used by this application to persist your user's data.
-    |
-    | Supported: "session"
+    | Di sini Anda mendefinisikan setiap guard otentikasi.
     |
     */
 
     'guards' => [
-        'api' => [
-        'driver' => 'jwt',
-        'provider' => 'users',
-    ],
-        'web' => [
+        'web' => [ // Guard untuk otentikasi web (admin panel)
             'driver' => 'session',
-            'provider' => 'admins',
+            'provider' => 'admins', // Menggunakan provider 'admins'
         ],
-        
-    ],
 
-    
+        'api' => [ // Guard untuk otentikasi API (mobile app)
+            'driver' => 'jwt',     // Menggunakan Tymon JWT
+            'provider' => 'users',   // Menggunakan provider 'users'
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------
     | User Providers
     |--------------------------------------------------------------------------
     |
-    | All authentication drivers have a user provider. This defines how the
-    | users are actually retrieved out of your database or other storage
-    | mechanisms used by this application to persist your user's data.
-    |
-    | If you have multiple user tables or models you may configure multiple
-    | sources which represent each model / table. These sources may then
-    | be assigned to any extra authentication guards you have defined.
-    |
-    | Supported: "database", "eloquent"
+    | Semua driver otentikasi memiliki user provider. Ini mendefinisikan bagaimana
+    | pengguna diambil dari database Anda atau mekanisme penyimpanan lainnya.
     |
     */
 
     'providers' => [
-        'admins' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\Admin::class,
+        'users' => [ // Provider untuk user mobile (dari model User Anda)
+            'driver' => 'eloquent', // Atau 'mongodb' jika Anda menggunakan driver mongodb khusus untuk eloquent
+            'model' => App\Models\User::class,
         ],
 
-        'users' => [
+        'admins' => [ // Provider untuk admin
             'driver' => 'eloquent',
-            'model' => App\Models\User::class,
+            'model' => App\Models\Admin::class, // GANTI INI jika model Admin Anda berbeda
+                                               // atau App\Models\User::class jika admin adalah User dengan role
         ],
     ],
 
@@ -83,32 +67,22 @@ return [
     | Resetting Passwords
     |--------------------------------------------------------------------------
     |
-    | You may specify multiple password reset configurations if you have more
-    | than one user table or model in the application and you want to have
-    | separate password reset settings based on the specific user types.
-    |
-    | The expiry time is the number of minutes that each reset token will be
-    | considered valid. This security feature keeps tokens short-lived so
-    | they have less time to be guessed. You may change this as needed.
-    |
-    | The throttle setting is the number of seconds a user must wait before
-    | generating more password reset tokens. This prevents the user from
-    | quickly generating a very large amount of password reset tokens.
+    | Konfigurasi untuk reset password.
     |
     */
 
     'passwords' => [
         'admins' => [
             'provider' => 'admins',
-            'table' => 'password_reset_tokens',
+            'table' => 'password_reset_tokens', // Atau nama tabel yang sesuai untuk admin
             'expire' => 60,
             'throttle' => 60,
         ],
-        'users' => [
-        'provider' => 'users',
-        'table' => 'password_reset_tokens',
-        'expire' => 60,
-        'throttle' => 60,
+        'users' => [ // Untuk user mobile
+            'provider' => 'users',
+            'table' => 'password_reset_tokens', // Bisa tabel yang sama atau berbeda
+            'expire' => 60,
+            'throttle' => 60,
         ],
     ],
 
@@ -116,11 +90,6 @@ return [
     |--------------------------------------------------------------------------
     | Password Confirmation Timeout
     |--------------------------------------------------------------------------
-    |
-    | Here you may define the amount of seconds before a password confirmation
-    | times out and the user is prompted to re-enter their password via the
-    | confirmation screen. By default, the timeout lasts for three hours.
-    |
     */
 
     'password_timeout' => 10800,
