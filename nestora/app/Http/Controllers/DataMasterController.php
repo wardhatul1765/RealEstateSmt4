@@ -22,7 +22,7 @@ class DataMasterController extends Controller
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('title', 'like', '%' . $search . '%')
-                  ->orWhere('Address', 'like', '%' . $search . '%');
+                  ->orWhere('address', 'like', '%' . $search . '%');
             });
         }
 
@@ -52,7 +52,7 @@ class DataMasterController extends Controller
     {
         $rules = [
             'title' => 'required|string|max:255',
-            'Address' => 'nullable|string|max:1000',
+            'address' => 'nullable|string|max:1000',
             'bedrooms' => 'nullable|integer|min:0',
             'bathrooms' => 'nullable|integer|min:0',
             'price' => 'nullable|numeric|min:0',

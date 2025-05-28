@@ -85,7 +85,7 @@
                                 <tr :key="'prop-' + '{{ $property->id }}'" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 text-xs">
                                     <td class="px-2 py-1 whitespace-nowrap">{{ $dataProperty->firstItem() + $index }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap" title="{{$property->title}}">{{ Str::limit($property->title, 20) }}</td>
-                                    <td class="px-2 py-1 whitespace-nowrap" title="{{$property->Address}}">{{ Str::limit($property->Address, 25) }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap" title="{{$property->address}}">{{ Str::limit($property->address, 25) }}</td>
                                     <td class="px-1 py-1 text-center whitespace-nowrap">{{ $property->bedrooms }}</td>
                                     <td class="px-1 py-1 text-center whitespace-nowrap">{{ $property->bathrooms }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap">AED {{ number_format($property->price, 0, ',', '.') }}</td>
@@ -214,8 +214,8 @@
                                    class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 focus:ring-purple-500 focus:border-purple-500">
                         </div>
                         <div class="md:col-span-2">
-                            <label for="Address_form" class="block font-medium text-gray-700 dark:text-gray-300">Alamat</label>
-                            <input type="text" name="Address" id="Address_form" x-model="formData.Address"
+                            <label for="address_form" class="block font-medium text-gray-700 dark:text-gray-300">Alamat</label>
+                            <input type="text" name="address" id="address_form" x-model="formData.address"
                                    class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 focus:ring-purple-500 focus:border-purple-500">
                         </div>
 
@@ -406,7 +406,7 @@ function masterProperti() {
         furnishingMapForPrediction: { '': null, 'Yes': 0, 'No': 1, 'Partly': 2 },
 
         formData: {
-            title: '', Address: '', bedrooms: '', bathrooms: '', price: '',
+            title: '', address: '', bedrooms: '', bathrooms: '', price: '',
             sizeMin: '', furnishing: '', propertyType: 'Residential for Sale', 
             status: true, mainView: '', propertyLabel: '', description: '',
             // created_at DIHAPUS dari formData karena diurus Laravel
@@ -487,7 +487,7 @@ function masterProperti() {
         resetAlpineFormData() {
             // const today = this.getTodayDate(); // Tidak lagi diperlukan untuk created_at
             this.formData = {
-                title: '', Address: '', bedrooms: '', bathrooms: '', price: '',
+                title: '', address: '', bedrooms: '', bathrooms: '', price: '',
                 sizeMin: '', furnishing: '', propertyType: 'Residential for Sale',
                 status: true, mainView: '', propertyLabel: '', description: '',
                 // created_at DIHAPUS
@@ -516,7 +516,7 @@ function masterProperti() {
                 const data = await response.json(); 
 
                 this.formData.title = data.title || '';
-                this.formData.Address = data.Address || '';
+                this.formData.address = data.address || '';
                 this.formData.bedrooms = data.bedrooms === null ? '' : data.bedrooms;
                 this.formData.bathrooms = data.bathrooms === null ? '' : data.bathrooms;
                 this.formData.price = data.price === null ? '' : data.price;
@@ -631,7 +631,7 @@ function masterProperti() {
             const formDataToSend = new FormData(formElement); 
 
             formDataToSend.set('title', this.formData.title);
-            formDataToSend.set('Address', this.formData.Address);
+            formDataToSend.set('address', this.formData.address);
             formDataToSend.set('bedrooms', this.formData.bedrooms);
             formDataToSend.set('bathrooms', this.formData.bathrooms);
             formDataToSend.set('price', this.formData.price);

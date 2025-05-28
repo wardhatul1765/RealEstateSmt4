@@ -79,7 +79,7 @@
                                 <tr>
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">{{ $properties->firstItem() + $index }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{ $property->title }}">{{ Str::limit($property->title, 20) }}</td>
-                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{ $property->Address }}">{{ Str::limit($property->Address, 22) }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{ $property->address }}">{{ Str::limit($property->address, 22) }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">AED {{ number_format($property->price, 0, ',', '.') }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{ $property->propertyType }}">{{ Str::limit($property->propertyType, 12) }}</td>
                                     <td class="px-1 py-1 whitespace-nowrap text-xs text-center text-gray-900 dark:text-gray-100">{{ $property->bedrooms }}</td>

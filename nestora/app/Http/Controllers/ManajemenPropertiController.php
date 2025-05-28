@@ -28,7 +28,7 @@ class ManajemenPropertiController extends Controller
                 // Pencarian untuk field teks
                 // Sesuaikan nama field dengan yang ada di Model Property
                 $q->where('title', 'regexp', "/.*{$escapedSearchTerm}.*/i") // 'i' untuk case-insensitive
-                    ->orWhere('Address', 'regexp', "/.*{$escapedSearchTerm}.*/i") // Sebelumnya 'displayAddress'
+                    ->orWhere('address', 'regexp', "/.*{$escapedSearchTerm}.*/i") // Sebelumnya 'displayAddress'
                     ->orWhere('propertyType', 'regexp', "/.*{$escapedSearchTerm}.*/i") // Sebelumnya 'type'
                     // ->orWhere('description', 'regexp', "/.*{$escapedSearchTerm}.*/i") // Dihapus karena 'description' tidak ada di model Property terbaru
                     ->orWhere('mainView', 'regexp', "/.*{$escapedSearchTerm}.*/i") // Sebelumnya 'view_type'
@@ -150,7 +150,7 @@ class ManajemenPropertiController extends Controller
     public function approve($id)
     {
         $property = UserProperty::findOrFail($id);
-        $property->status = true; // Mengubah status menjadi true (disetujui)
+        $property->status = 'approved'; // Mengubah status menjadi true (disetujui)
         $property->save();
 
         return redirect()->route('manajemen-properti.persetujuan')->with('success', 'Properti berhasil disetujui.');
@@ -162,7 +162,7 @@ class ManajemenPropertiController extends Controller
     public function reject($id)
     {
         $property = UserProperty::findOrFail($id);
-        $property->status = false; // Mengubah status menjadi false (ditolak/pending)
+        $property->status = 'rejected'; // Mengubah status menjadi false (ditolak/pending)
         $property->save();
 
         return redirect()->route('manajemen-properti.persetujuan')->with('success', 'Properti berhasil ditolak.');

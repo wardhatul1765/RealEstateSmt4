@@ -85,7 +85,7 @@
                                     {{-- Mengubah padding dan font size data sel agar lebih kecil --}}
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">{{ $dataProperty->firstItem() + $index }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{$property->title}}">{{ Str::limit($property->title, 15) }}</td>
-                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{$property->Address}}">{{ Str::limit($property->Address, 20) }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{$property->address}}">{{ Str::limit($property->address, 20) }}</td>
                                     <td class="px-1 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100 text-center">{{ $property->bedrooms }}</td>
                                     <td class="px-1 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100 text-center">{{ $property->bathrooms }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">AED {{ number_format($property->price, 0, ',', '.') }}</td>
