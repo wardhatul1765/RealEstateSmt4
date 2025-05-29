@@ -36,7 +36,7 @@ class APIAuthController extends Controller
 
         try {
             if (!$token = JWTAuth::fromUser($user)) { // Coba generate token
-                 return response()->json([
+                return response()->json([
                     'success' => false,
                     'message' => 'Tidak dapat membuat token.'
                 ], 500);
@@ -95,7 +95,7 @@ class APIAuthController extends Controller
                 ], 500);
             }
         } catch (JWTException $e) {
-             return response()->json([
+            return response()->json([
                 'success' => false,
                 'message' => 'Registrasi berhasil tetapi tidak dapat membuat token: ' . $e->getMessage()
             ], 500);
@@ -152,9 +152,10 @@ class APIAuthController extends Controller
         ]);
     }
 
-    // --- TAMBAHKAN FUNGSI UNTUK UPDATE PROFIL ---
+    // --- UPDATE PROFIL ---
     public function updateUserProfile(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         if (!$user) {
