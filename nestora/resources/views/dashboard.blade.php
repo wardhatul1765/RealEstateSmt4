@@ -1,54 +1,68 @@
 <x-app-layout>
-    <div class="space-y-6">
+    <div class="max-w-6xl mx-auto p-4 space-y-4">
         {{-- Summary Cards --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <x-dashboard.card title="Total Properti" value="{{ $totalProperties ?? 0 }}" unit="Unit" />
-            <x-dashboard.card title="Rata-rata Harga Properti" value="{{ 'AED ' . number_format($averagePrice ?? 0, 0, ',', '.') }}" unit="" />
-            <x-dashboard.card title="Rata-rata Luas Properti" value="{{ round($averageSize ?? 0, 2) }}" unit="m²" />
-            <x-dashboard.card title="Properti Belum Terverifikasi" value="{{ $propertiBelumTerverifikasi ?? 0 }}" unit="Unit" />
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <x-dashboard.card title="Total Properti" value="{{ $totalProperties ?? 0 }}" unit="Unit" class="p-4" />
+            <x-dashboard.card title="Rata-rata Harga" value="{{ $averagePriceFormatted }}" unit="" class="p-4" />
+            <x-dashboard.card title="Rata-rata Luas" value="{{ $averageSize }}" unit="sqft" class="p-4" />
+            <x-dashboard.card title="Belum Terverifikasi" value="{{ $propertiBelumTerverifikasi ?? 0 }}" unit="Unit" class="p-4" />
         </div>
 
-        {{-- Charts --}}
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {{-- Histogram Distribusi Harga Properti --}}
-            <x-dashboard.chart title="Distribusi Harga Properti">
-                <canvas id="priceDistributionChart" class="h-64"></canvas>
-            </x-dashboard.chart>
-
-            <div class="space-y-6">
-                {{-- Scatter Plot Luas vs Harga --}}
-                <x-dashboard.chart title="Hubungan Luas vs Harga">
-                    <canvas id="sizePriceChart" class="h-48"></canvas>
-                </x-dashboard.chart>
-
-                {{-- Bar Chart Tren Penambahan Properti Per Bulan --}}
-                <x-dashboard.chart title="Tren Penambahan Properti Per Bulan">
-                    <canvas id="addedPropertiesChart" class="h-48"></canvas>
-                </x-dashboard.chart>
-
-                {{-- Pie Chart Distribusi Furnishing --}}
-                <x-dashboard.chart title="Distribusi Status Furnishing">
-                    <canvas id="furnishingDistributionChart" class="h-48"></canvas>
-                </x-dashboard.chart>
+        {{-- Charts Section --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {{-- Distribusi Harga --}}
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold mb-3">Distribusi Harga Properti</h3>
+                <div class="h-48">
+                    <canvas id="priceDistributionChart"></canvas>
+                </div>
             </div>
 
-            {{-- Line Chart Harga yang Sering Muncul --}}
-                <x-dashboard.chart title="Harga yang Sering Muncul">
-                  <canvas id="mostFrequentPriceChart" class="h-72"></canvas>
-                </x-dashboard.chart>
+            {{-- Status Furnishing --}}
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold mb-3">Status Furnishing</h3>
+                <div class="h-48">
+                    <canvas id="furnishingDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
 
+        {{-- Second Row Charts --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {{-- Scatter Plot --}}
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold mb-3">Hubungan Luas vs Harga</h3>
+                <div class="h-48">
+                    <canvas id="sizePriceChart"></canvas>
+                </div>
+            </div>
+
+            {{-- Tren Penambahan --}}
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-semibold mb-3">Tren Penambahan Properti</h3>
+                <div class="h-48">
+                    <canvas id="addedPropertiesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        {{-- Third Row - Full Width Chart --}}
+        <div class="bg-white rounded-lg shadow p-4">
+            <h3 class="text-lg font-semibold mb-3">Rata-rata Harga Per Bulan</h3>
+            <div class="h-64">
+                <canvas id="averagePriceChart"></canvas>
+            </div>
         </div>
     </div>
 
-    {{-- Script --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const priceCtx = document.getElementById('priceDistributionChart').getContext('2d');
-        const sizePriceCtx = document.getElementById('sizePriceChart').getContext('2d');
-        const addedCtx = document.getElementById('addedPropertiesChart').getContext('2d');
-        const furnishingCtx = document.getElementById('furnishingDistributionChart').getContext('2d');
-        const mostFrequentPriceCtx = document.getElementById('mostFrequentPriceChart').getContext('2d');
+        // Konfigurasi default untuk semua chart
+        Chart.defaults.responsive = true;
+        Chart.defaults.maintainAspectRatio = false;
 
+        // Price Distribution Chart
+        const priceCtx = document.getElementById('priceDistributionChart').getContext('2d');
         new Chart(priceCtx, {
             type: 'bar',
             data: {
@@ -56,12 +70,18 @@
                 datasets: [{
                     label: 'Jumlah Properti',
                     data: {!! json_encode($priceDistribution['data']) !!},
-                    backgroundColor: '#4CAF50',
-                    borderColor: '#388E3C',
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
                     borderWidth: 1,
                 }]
             },
             options: {
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -80,23 +100,69 @@
             }
         });
 
+        // Furnishing Distribution Chart
+        const furnishingCtx = document.getElementById('furnishingDistributionChart').getContext('2d');
+        new Chart(furnishingCtx, {
+            type: 'pie',
+            data: {
+                labels: {!! json_encode($furnishingDistribution['labels']) !!},
+                datasets: [{
+                    data: {!! json_encode($furnishingDistribution['data']) !!},
+                    backgroundColor: [
+                        '#FF6384',
+                        '#36A2EB', 
+                        '#FFCE56',
+                        '#4BC0C0',
+                        '#9966FF',
+                        '#FF9F40'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 10,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+
+        // Size vs Price Scatter Chart
+        const sizePriceCtx = document.getElementById('sizePriceChart').getContext('2d');
         new Chart(sizePriceCtx, {
             type: 'scatter',
             data: {
                 datasets: [{
-                    label: 'Luas vs Harga Properti',
+                    label: 'Luas vs Harga',
                     data: {!! json_encode($sizePriceData) !!},
-                    backgroundColor: 'rgba(54, 162, 235, 0.8)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    pointRadius: 5,
+                    backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
                 }]
             },
             options: {
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
                 scales: {
                     y: {
                         title: {
                             display: true,
-                            text: 'Harga'
+                            text: 'Harga (Rp)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return 'Rp ' + (value / 1000000).toFixed(0) + 'M';
+                            }
                         }
                     },
                     x: {
@@ -109,6 +175,8 @@
             }
         });
 
+        // Added Properties Chart
+        const addedCtx = document.getElementById('addedPropertiesChart').getContext('2d');
         new Chart(addedCtx, {
             type: 'bar',
             data: {
@@ -116,16 +184,23 @@
                 datasets: [{
                     label: 'Properti Ditambahkan',
                     data: {!! json_encode($addedPropertiesPerMonth['data']) !!},
-                    backgroundColor: '#68d391',
+                    backgroundColor: 'rgba(168, 85, 247, 0.8)',
+                    borderColor: 'rgba(168, 85, 247, 1)',
+                    borderWidth: 1,
                 }]
             },
             options: {
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Jumlah Properti Ditambahkan'
+                            text: 'Jumlah Properti'
                         }
                     },
                     x: {
@@ -138,39 +213,45 @@
             }
         });
 
-        new Chart(furnishingCtx, {
-            type: 'pie',
-            data: {
-                labels: {!! json_encode($furnishingDistribution['labels']) !!},
-                datasets: [{
-                    data: {!! json_encode($furnishingDistribution['data']) !!},
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
-                }]
-            }
-        });
-
-        new Chart(mostFrequentPriceCtx, {
+        // Average Price Per Month Chart
+        const averagePriceCtx = document.getElementById('averagePriceChart').getContext('2d');
+        new Chart(averagePriceCtx, {
             type: 'line',
             data: {
-                labels: {!! json_encode($mostFrequentPricePerMonth['labels']) !!},
+                labels: {!! json_encode($averagePricePerMonth['labels']) !!},
                 datasets: [{
-                    label: 'Harga Properti (Paling Sering Muncul)',
-                    data: {!! json_encode($mostFrequentPricePerMonth['data']) !!},
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 2,
-                    tension: 0.3,
+                    label: 'Rata-rata Harga',
+                    data: {!! json_encode($averagePricePerMonth['data']) !!},
+                    backgroundColor: 'rgba(245, 101, 101, 0.1)',
+                    borderColor: 'rgba(245, 101, 101, 1)',
+                    borderWidth: 3,
+                    tension: 0.4,
                     fill: true,
-                    pointRadius: 4
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: 'rgba(245, 101, 101, 1)',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
                 }]
             },
             options: {
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
                 scales: {
                     y: {
-                        beginAtZero: true,
+                        beginAtZero: false,
                         title: {
                             display: true,
-                            text: 'Harga (AED)'
+                            text: 'Harga (Rp)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return 'Rp ' + (value / 1000000).toFixed(1) + 'M';
+                            }
                         }
                     },
                     x: {
