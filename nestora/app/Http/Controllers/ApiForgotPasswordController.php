@@ -37,22 +37,11 @@ class ApiForgotPasswordController extends Controller
         ]);
 
         // Kirim email berisi kode (bukan link)
-    //   Kirim email berisi kode
         try {
-            Mail::raw(
-                "Halo,\n\n" .
-                "Anda menerima email ini karena kami menerima permintaan reset password untuk akun Anda di $appName.\n\n" .
-                "Kode reset password Anda adalah: $code\n\n" .
-                "Silakan masukkan kode ini di aplikasi untuk melanjutkan proses reset password. " .
-                "Kode ini akan kedaluwarsa dalam $codeExpirationMinutes menit.\n\n" .
-                "Jika Anda tidak meminta reset password, abaikan email ini.\n\n" .
-                "Terima kasih,\n" .
-                "Tim $appName",
-                function ($message) use ($request, $appName) {
-                    $message->to($request->email)
-                            ->subject("[$appName] Kode Reset Password Anda");
-                }
-            );
+            Mail::raw("Kode reset password Anda adalah: $code. Kode ini akan kedaluwarsa dalam 10 menit.", function ($message) use ($request) {
+                $message->to($request->email)
+                        ->subject('Kode Reset Password Anda');
+            });
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Gagal mengirim email reset password. Silakan coba lagi nanti.'], 500);
         }
