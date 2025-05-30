@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Storage;
 Route::post('/register', [APIAuthController::class, 'register']);
 Route::post('/login', [APIAuthController::class, 'login']);
 Route::post('/refresh', [APIAuthController::class, 'refresh']); // Pastikan method refresh ada dan berfungsi
+Route::get('/properties/public', [APIPropertyController::class, 'getPublicProperties']);
 
 Route::middleware('auth:api')->group(function () {
     Route::get('/profile', [APIAuthController::class, 'profile']);

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\UserProperty; //
+use App\Models\UserProperty;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 class APIPropertyController extends Controller
 {
     public function __construct() {
-        $this->middleware('auth:api');
+        $this->middleware('auth:api')->except(['getPublicProperties']);
     }
 
     public function index(Request $request)
@@ -369,6 +369,44 @@ class APIPropertyController extends Controller
                 'error_trace' => $e->getTraceAsString()
             ]);
             return response()->json(['error' => "Failed to update property ID {$id} in database. Check logs."], 500);
+        }
+    }
+
+    public function getPublicProperties(Request $request)
+    {
+        try {
+            $statusToQuery = 'approved'; // Status yang kita cari
+            Log::info("APIPropertyController: Mencari properti publik dengan status: " . $statusToQuery . " menggunakan model UserProperty.");
+
+            // ==== PERUBAHAN DI SINI: Gunakan UserProperty ====
+            $properties = UserProperty::where('status', $statusToQuery)
+                                ->orderBy('updated_at', 'desc')
+                                ->paginate(10);
+
+            if ($properties->isEmpty()) {
+                Log::info("APIPropertyController: Tidak ada properti publik ditemukan dengan status '$statusToQuery' di UserProperty.");
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Tidak ada properti yang tersedia saat ini.',
+                    'data' => [] // Tetap kembalikan array kosong dalam object paginasi jika menggunakan paginate
+                                 // atau langsung [] jika tidak pakai paginate
+                ], 200);
+            }
+
+            Log::info("APIPropertyController: Properti publik ditemukan (" . $properties->count() . " items di halaman ini). Mengirim respons.");
+            return response()->json([
+                'success' => true,
+                'message' => 'Properti publik berhasil diambil.',
+                'data' => $properties // Respons paginasi dari Laravel sudah bagus
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('APIPropertyController Error fetching public properties: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data properti publik.',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }
