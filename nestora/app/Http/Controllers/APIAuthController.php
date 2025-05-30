@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // Pastikan ini ada
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User; // Pastikan namespace User model Anda benar
-use Tymon\JWTAuth\Facades\JWTAuth; // Pastikan ini ada
+use Illuminate\Support\Facades\Validator;
+use App\Models\User;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
-// Hapus use Tymon\JWTAuth\JWTGuard; jika tidak digunakan secara eksplisit sebagai tipe hint lagi
 
 class APIAuthController extends Controller
 {
@@ -195,6 +195,49 @@ class APIAuthController extends Controller
                 'bio' => $user->bio ?? '',
             ]
         ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        if (!$user) {
+            // Sebenarnya middleware auth:api sudah menangani ini,
+            // tapi sebagai pengaman tambahan
+            return response()->json(['success' => false, 'message' => 'User not authenticated.'], 401);
+        }
+
+        // 1. Validasi Input
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed', // 'confirmed' akan mencocokkan dengan 'new_password_confirmation'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Input tidak valid.',
+                'errors' => $validator->errors()
+            ], 422); // 422 Unprocessable Entity
+        }
+
+        // 2. Verifikasi Password Lama
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Password lama Anda salah.'
+            ], 400); // 400 Bad Request
+        }
+
+        // 3. Update ke Password Baru
+        $user->password = Hash::make($request->new_password);
+        $user->save(); // Simpan perubahan
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password berhasil diubah.'
+        ], 200); // 200 OK
     }
 
 
