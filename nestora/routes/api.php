@@ -5,10 +5,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\APIAuthController;
 use App\Http\Controllers\PredictionController;
 use App\Http\Controllers\APIPropertyController;
+use App\Http\Controllers\APIForgotPasswordController;
 use App\Http\Controllers\APIImageController;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Spatie\FlareClient\Api;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,6 +27,14 @@ Route::post('/register', [APIAuthController::class, 'register']);
 Route::post('/login', [APIAuthController::class, 'login']);
 Route::post('/refresh', [APIAuthController::class, 'refresh']); // Pastikan method refresh ada dan berfungsi
 Route::get('/properties/public', [APIPropertyController::class, 'getPublicProperties']);
+
+// --- RUTE LUPA PASSWORD ---
+// 1. Meminta kode reset dikirim ke email
+Route::post('/forgot-password', [ApiForgotPasswordController::class, 'sendResetCodeEmail']);
+// 2. Memverifikasi kode yang dimasukkan pengguna di aplikasi
+Route::post('/verify-password-code', [ApiForgotPasswordController::class, 'verifyCode']);
+// 3. Mereset password setelah kode diverifikasi
+Route::post('/reset-password-with-code', [ApiForgotPasswordController::class, 'resetPasswordWithCode']);
 
 Route::middleware('auth:api')->group(function () {
     Route::get('/profile', [APIAuthController::class, 'profile']);

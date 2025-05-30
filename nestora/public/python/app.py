@@ -11,7 +11,7 @@ CORS(app) # Aktifkan CORS untuk semua route
 # Tentukan path model relatif
 # Pastikan app.py berada di folder yang benar relatif terhadap model, atau sesuaikan path ini.
 # Jika app.py ada di 'public/python' dan model juga di sana:
-model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rf_model.pkl')
+model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'gb_model.pkl')
 
 # Cek jika file model ada
 if not os.path.exists(model_path):

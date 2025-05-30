@@ -60,16 +60,27 @@
                                     </td>
 
                                     {{-- Menampilkan ringkasan fitur input (akses dengan notasi objek ->) --}}
-                                    <td class="py-3 px-6">
-                                        Bath: {{ $prediksi->bathrooms ?? 'N/A' }},
-                                        Bed: {{ $prediksi->bedrooms ?? 'N/A' }},
-                                        Size: {{ $prediksi->sizeMin ?? 'N/A' }} m²,
-                                        {{-- Sesuaikan perbandingan untuk string '1' atau '0' --}}
-                                        Furn: {{ isset($prediksi->furnishing) && $prediksi->furnishing == '1' ? 'Yes' : 'No' }},
-                                        Verif: {{ isset($prediksi->verified) && $prediksi->verified == '1' ? 'True' : 'False' }} {{-- Asumsi '1' itu True, '0' itu False --}}
-                                        {{-- Contoh Tambahan jika field ada di data Anda: --}}
-                                        {{-- , View: {{ $prediksi->view_type ?? 'N/A' }}, Age: {{ $prediksi->listing_age_category ?? 'N/A' }}, Key: {{ $prediksi->title_keyword ?? 'N/A' }} --}}
-                                    </td>
+                                  <td class="py-3 px-6">
+                                    Bath: {{ $prediksi->bathrooms ?? 'N/A' }},
+                                    Bed: {{ $prediksi->bedrooms ?? 'N/A' }},
+                                    Size: {{ $prediksi->sizeMin ?? 'N/A' }} sqft,
+                                    Furn: 
+                                    @if(isset($prediksi->furnishing))
+                                        @if($prediksi->furnishing == '1')
+                                            Yes
+                                        @elseif($prediksi->furnishing == '2')
+                                            Partly
+                                        @else
+                                            No
+                                        @endif
+                                    @else
+                                        N/A
+                                    @endif,
+                                    Verif: {{ isset($prediksi->verified) && $prediksi->verified == '1' ? 'True' : 'False' }}
+                                    {{-- Uncomment jika ingin menampilkan kolom lainnya --}}
+                                    {{-- , View: {{ $prediksi->view_type ?? 'N/A' }}, Age: {{ $prediksi->listing_age_category ?? 'N/A' }}, Key: {{ $prediksi->title_keyword ?? 'N/A' }} --}}
+                                </td>
+
 
                                     {{-- Menampilkan hasil prediksi IDR dengan Prefix "Rp." --}}
                                     <td class="py-3 px-6 text-right">
