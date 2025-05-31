@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use App\Models\PropertyView;
 use App\Models\UserProperty;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use MongoDB\BSON\UTCDateTime;
 
 class APIPropertyController extends Controller
 {
     public function __construct() {
-        $this->middleware('auth:api')->except(['getPublicProperties']);
+        $this->middleware('auth:api')->except(['getPublicProperties', 'showPublicProperty', 'recordView']); // showPublicProperty & recordView bisa diakses publik
     }
 
     public function index(Request $request)
@@ -75,7 +78,7 @@ class APIPropertyController extends Controller
             'listingAgeCategory' => 'nullable|string|max:255', 
             'propertyLabel' => 'nullable|string|max:255',
             'images' => 'required|array|min:1', 
-            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:10000',
         ]);
 
         if ($validator->fails()) {
@@ -359,4 +362,162 @@ class APIPropertyController extends Controller
             ], 500);
         }
     }
+
+public function showPublicProperty(Request $request, $id)
+    {
+        Log::info("APIPropertyController: showPublicProperty dipanggil untuk ID: " . $id);
+        $property = UserProperty::find($id);
+
+        if (!$property || $property->status !== 'approved') {
+            Log::warning("APIPropertyController: Properti {$id} tidak ditemukan atau status bukan approved.");
+            return response()->json(['success' => false, 'message' => 'Property not found or not available.'], 404);
+        }
+
+        try {
+            Log::info("APIPropertyController: Mencoba mencatat view untuk properti {$id}. Pengguna: " . (auth('api')->check() ? auth('api')->id() : 'Anonim') . ", IP: " . $request->ip());
+            PropertyView::create([
+                'property_id' => $property->_id,
+                'user_id' => auth('api')->check() ? auth('api')->id() : null,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->header('User-Agent'),
+                'viewed_at' => now(),
+            ]);
+            Log::info("APIPropertyController: Entri PropertyView BERHASIL dicatat untuk properti {$id}.");
+
+            // Ambil nilai views saat ini, default ke 0 jika belum ada/null
+            $currentViews = $property->total_views_count ?? 0;
+            Log::info("APIPropertyController: total_views_count SEBELUM increment: " . $currentViews . " untuk properti {$id}.");
+
+            $property->total_views_count = $currentViews + 1;
+            $property->save(); // Simpan perubahan ke database
+
+            // PENTING: Muat ulang model dari database untuk memastikan semua atribut (termasuk yang baru diupdate) segar
+            $property->refresh(); 
+
+            Log::info("APIPropertyController: total_views_count SETELAH refresh: " . $property->total_views_count . " untuk properti {$id}.");
+
+        } catch (\Exception $e) {
+            Log::error("APIPropertyController: GAGAL mencatat view atau increment untuk properti {$id}: " . $e->getMessage(), ['exception' => $e]);
+        }
+        
+        // Log data yang AKAN dikirim ke Flutter
+        Log::info("APIPropertyController: Data properti yang akan dikirim ke Flutter: ", $property->toArray());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Property details fetched successfully.',
+            'data' => $property, // $property di sini seharusnya sudah memiliki total_views_count yang benar
+        ]);
+    }
+
+    public function getPropertyViewStatistics(Request $request, $id)
+    {
+        Log::info("APIPropertyController: getPropertyViewStatistics dipanggil untuk ID properti (dari route): " . $id . " (tipe: " . gettype($id) . ")");
+        $property = UserProperty::find($id);
+        if (!$property) {
+            Log::warning("APIPropertyController: Properti {$id} tidak ditemukan untuk statistik.");
+            return response()->json(['success' => false, 'message' => 'Property not found'], 404);
+        }
+
+        $property_id_to_match = $property->_id;
+        Log::info("APIPropertyController (Stats): ID Properti yang akan dicocokkan di property_views: " . $property_id_to_match . " (tipe: " . gettype($property_id_to_match) . ")");
+
+        $user = auth('api')->user();
+        if (!$user || $property->user_id !== $user->id) {
+            Log::warning("APIPropertyController: Pengguna ".($user ? $user->id : 'NULL')." tidak diotorisasi untuk statistik properti {$property_id_to_match}.");
+            return response()->json(['success' => false, 'message' => 'Unauthorized to view statistics for this property'], 403);
+        }
+
+        // Pengecekan class_exists sekali saja di awal (opsional, tapi baik untuk debugging lingkungan)
+        if (!class_exists('MongoDB\\BSON\\UTCDateTime')) {
+            Log::critical('KRITIKAL: Kelas MongoDB\\BSON\\UTCDateTime tidak tersedia saat RUNTIME. Ekstensi PHP mongodb kemungkinan tidak aktif untuk PROSES WEB SERVER. Cek php.ini web server dan restart.');
+            return response()->json(['success' => false, 'message' => 'Kesalahan konfigurasi server: MongoDB UTCDateTime class not found.'], 500);
+        }
+
+        // Statistik Harian (30 hari terakhir)
+        $dailyStats = [];
+        $endDateDailyCar = Carbon::now('UTC')->endOfDay();
+        $startDateDailyCar = Carbon::now('UTC')->subDays(29)->startOfDay();
+        $endDateDailyCar = Carbon::now('UTC')->endOfDay();
+
+        Log::info("Eloquent whereBetween Daily Range (UTC Carbon):", [$startDateDailyCar, $endDateDailyCar]);
+
+        $dailyRawCursor = PropertyView::where('property_id', $property_id_to_match)
+            ->whereBetween('viewed_at', [$startDateDailyCar, $endDateDailyCar])
+            ->raw(function($collection) {
+                return $collection->aggregate([
+                    [
+                        '$group' => [
+                            '_id' => ['$dateToString' => ['format' => '%Y-%m-%d', 'date' => '$viewed_at', 'timezone' => 'Asia/Jakarta']],
+                            'count' => ['$sum' => 1]
+                        ]
+                    ],
+                    ['$sort' => ['_id' => 1]]
+                ]);
+            });
+        $dailyRawArray = [];
+        if ($dailyRawCursor instanceof \Traversable || is_array($dailyRawCursor)) {
+            foreach ($dailyRawCursor as $item) {
+                $dailyRawArray[] = $item;
+            }
+        }
+        Log::info("Raw Daily Data (Eloquent whereBetween + Raw Group):", $dailyRawArray);
+
+        for ($dateLoop = $startDateDailyCar->copy(); $dateLoop->lte($endDateDailyCar); $dateLoop->addDay()) {
+            $dailyStats[$dateLoop->format('Y-m-d')] = 0;
+        }
+        foreach ($dailyRawArray as $day) {
+            if (isset($day['_id']) && is_string($day['_id']) && isset($day['count'])) {
+                 $dailyStats[$day['_id']] = $day['count'];
+            }
+        }
+
+        // Statistik Bulanan (12 bulan terakhir)
+        $monthlyStats = [];
+        $endDateMonthlyCar = Carbon::now('UTC')->endOfMonth();
+        $startDateMonthlyCar = Carbon::now('UTC')->subMonths(11)->startOfMonth();
+        $endDateMonthlyCar = Carbon::now('UTC')->endOfMonth();
+        Log::info("Eloquent whereBetween Monthly Range (UTC Carbon):", [$startDateMonthlyCar, $endDateMonthlyCar]);
+        $monthlyRawCursor = PropertyView::where('property_id', $property_id_to_match)
+            ->whereBetween('viewed_at', [$startDateMonthlyCar, $endDateMonthlyCar])
+            ->raw(function($collection) {
+                return $collection->aggregate([
+                    [
+                        '$group' => [
+                            '_id' => ['$dateToString' => ['format' => '%Y-%m', 'date' => '$viewed_at', 'timezone' => 'Asia/Jakarta']],
+                            'count' => ['$sum' => 1]
+                        ]
+                    ],
+                    ['$sort' => ['_id' => 1]]
+                ]);
+            });
+        $monthlyRawArray = [];
+        if ($monthlyRawCursor instanceof \Traversable || is_array($monthlyRawCursor)) {
+            foreach ($monthlyRawCursor as $item) {
+                $monthlyRawArray[] = $item;
+            }
+        }
+        Log::info("Raw Monthly Data (Eloquent whereBetween + Raw Group):", $monthlyRawArray);
+        
+        for ($dateLoop = $startDateMonthlyCar->copy(); $dateLoop->lte($endDateMonthlyCar); $dateLoop->addMonth()) {
+            $monthlyStats[$dateLoop->format('Y-m')] = 0;
+        }
+        foreach ($monthlyRawArray as $month) {
+            if (isset($month['_id']) && is_string($month['_id']) && isset($month['count'])) {
+                $monthlyStats[$month['_id']] = $month['count'];
+            }
+        }
+            
+        Log::info("APIPropertyController (Stats): Final Daily Stats for {$property_id_to_match}:", $dailyStats);
+        Log::info("APIPropertyController (Stats): Final Monthly Stats for {$property_id_to_match}:", $monthlyStats);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Property view statistics fetched successfully.',
+            'data' => [
+                'daily' => $dailyStats,
+                'monthly' => $monthlyStats,
+            ]
+        ]);
+    }    
 }

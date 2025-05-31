@@ -4,6 +4,7 @@ namespace App\Models;
 
 use MongoDB\Laravel\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Carbon\Carbon;
 
 class UserProperty extends Model
 {
@@ -23,15 +24,17 @@ class UserProperty extends Model
         'furnishing',
         'status',
         'user_id',
-        'address',          // <<< PERBAIKAN 1: Ubah menjadi 'address' (huruf kecil)
+        'address',
         'image',
         'propertyType',
         'mainView',
-        'listing_age_category', // <<< PERBAIKAN 2: Ubah 'addedOn' menjadi 'listingAgeCategory'
+        'listingAgeCategory',
         'propertyLabel',
+        'total_views_count', // TAMBAHAN: Untuk menyimpan total view (denormalisasi)
+        // 'view_statistics' // JANGAN tambahkan ini ke fillable jika di-generate oleh accessor
     ];
 
-    protected $guarded = ['id']; // Lebih aman mengosongkan ini jika semua field sudah di $fillable
+    protected $guarded = [];
 
     protected $casts = [
         'image' => 'array',
@@ -39,11 +42,36 @@ class UserProperty extends Model
         'bathrooms' => 'integer',
         'price' => 'float',
         'sizeMin' => 'float',
-        'status' => 'string', // Ini sudah benar
+        'status' => 'string',
+        'total_views_count' => 'integer', // TAMBAHAN
     ];
 
-    public function user()
+    // Relasi ke User (pemilik properti)
+    public function owner()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id', 'id'); // Sesuaikan 'id' jika User model PK-nya _id
     }
+
+    // Relasi ke semua log tampilan properti ini
+    public function views()
+    {
+        return $this->hasMany(PropertyView::class, 'property_id', '_id');
+    }
+
+    // Jika Anda memilih untuk TIDAK menggunakan endpoint API statistik terpisah,
+    // dan ingin statistik selalu ada saat model UserProperty diambil:
+    // Anda bisa uncomment accessor di bawah ini dan tambahkan 'view_statistics' ke $appends
+    // protected $appends = ['view_statistics'];
+    //
+    // public function getViewStatisticsAttribute()
+    // {
+    //     // Logika agregasi dari getPropertyViewStatistics dipindahkan ke sini
+    //     // Ini akan dijalankan setiap kali model diserialisasi ke JSON jika ada di $appends
+    //     // Pertimbangkan implikasi performa.
+    //     // ... (logika agregasi seperti di APIPropertyController) ...
+    //     return [
+    //         'daily' => [], // Hasil agregasi harian
+    //         'monthly' => [], // Hasil agregasi bulanan
+    //     ];
+    // }
 }
