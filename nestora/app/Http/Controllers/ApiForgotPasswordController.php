@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
+// Hapus Mail karena kita akan pakai Notifikasi
+// use Illuminate\Support\Facades\Mail; 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use App\Models\User;
+use App\Notifications\SendPasswordResetCode; // <-- TAMBAHKAN IMPORT NOTIFIKASI
+use Illuminate\Support\Facades\Log; 
 
 class ApiForgotPasswordController extends Controller
 {
@@ -23,26 +26,27 @@ class ApiForgotPasswordController extends Controller
             return response()->json(['success' => false, 'message' => 'Email tidak terdaftar pada sistem kami.'], 404);
         }
 
+        $user = User::where('email', $request->email)->first(); // Ambil objek user
+
         // Hapus token lama jika ada
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
         // Buat kode acak 6 digit
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        // Simpan kode ke database (Laravel menggunakan tabel `password_reset_tokens` secara default)
         DB::table('password_reset_tokens')->insert([
             'email' => $request->email,
-            'token' => $code, // Kita simpan kode di kolom token
+            'token' => $code, 
             'created_at' => Carbon::now()
         ]);
 
-        // Kirim email berisi kode (bukan link)
+        // Kirim email menggunakan Notifikasi
         try {
-            Mail::raw("Kode reset password Anda adalah: $code. Kode ini akan kedaluwarsa dalam 10 menit.", function ($message) use ($request) {
-                $message->to($request->email)
-                        ->subject('Kode Reset Password Anda');
-            });
+            // Gunakan $user->notify() untuk mengirim notifikasi
+            $user->notify(new SendPasswordResetCode($code, $user->name)); 
         } catch (\Exception $e) {
+            // Tambahkan log untuk error pengiriman email
+            Log::error('Failed to send password reset code email: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Gagal mengirim email reset password. Silakan coba lagi nanti.'], 500);
         }
 
@@ -52,6 +56,7 @@ class ApiForgotPasswordController extends Controller
         ], 200);
     }
 
+    // ... method verifyCode dan resetPasswordWithCode tetap sama ...
     /**
      * Memverifikasi kode reset yang dikirim dari aplikasi.
      */
@@ -67,12 +72,11 @@ class ApiForgotPasswordController extends Controller
         }
 
         $record = DB::table('password_reset_tokens')
-                    ->where('email', $request->email)
-                    ->where('token', $request->code)
-                    ->first();
+                        ->where('email', $request->email)
+                        ->where('token', $request->code)
+                        ->first();
 
-        // Jika tidak ada record atau record lebih dari 10 menit
-        if (!$record || Carbon::parse($record->created_at)->addMinutes(10)->isPast()) {
+        if (!$record || Carbon::parse($record->created_at)->addMinutes(10)->isPast()) { // Anggap 10 menit kedaluwarsa
             return response()->json(['success' => false, 'message' => 'Kode tidak valid atau telah kedaluwarsa.'], 400);
         }
 
@@ -84,7 +88,7 @@ class ApiForgotPasswordController extends Controller
      */
     public function resetPasswordWithCode(Request $request)
     {
-         $validator = Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:users,email',
             'code' => 'required|string|digits:6',
             'password' => 'required|string|min:6|confirmed',
@@ -94,22 +98,22 @@ class ApiForgotPasswordController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        // Verifikasi sekali lagi untuk keamanan
         $record = DB::table('password_reset_tokens')
-                    ->where('email', $request->email)
-                    ->where('token', $request->code)
-                    ->first();
+                        ->where('email', $request->email)
+                        ->where('token', $request->code)
+                        ->first();
         
         if (!$record || Carbon::parse($record->created_at)->addMinutes(10)->isPast()) {
             return response()->json(['success' => false, 'message' => 'Kode tidak valid atau telah kedaluwarsa.'], 400);
         }
 
-        // Update password user
-        $user = User::where('email', $request->email)->first();
-        $user->password = Hash::make($request->password);
-        $user->save();
+        $userToUpdate = User::where('email', $request->email)->first(); // Ambil user untuk diupdate
+        if (!$userToUpdate) { // Seharusnya tidak terjadi karena ada 'exists:users,email'
+            return response()->json(['success' => false, 'message' => 'Pengguna tidak ditemukan.'], 404);
+        }
+        $userToUpdate->password = Hash::make($request->password);
+        $userToUpdate->save();
 
-        // Hapus token setelah berhasil digunakan
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
         return response()->json(['success' => true, 'message' => 'Password Anda telah berhasil direset.'], 200);
