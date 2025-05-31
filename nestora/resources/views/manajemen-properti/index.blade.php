@@ -67,13 +67,13 @@
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Price</th>
                                 <th scope="col" class="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Size</th>
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Furn.</th>
-                                <th scope="col" class="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
                                 <!-- <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Added</th> -->
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">View</th>
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Label</th>
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Image</th>
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Desc.</th>
+                                <th scope="col" class="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created</th>
                                 <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Updated</th>
                                 {{-- <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Aksi</th> --}}
@@ -103,25 +103,7 @@
                                         @endphp
                                         {{ $displayFurnishing }}
                                     </td>
-                                    <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100 text-center">
-                                        @if($property->status === 'verified' || $property->status === true || $property->status === 1 || $property->status === '1')
-                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100">
-                                                Verified
-                                            </span>
-                                        @elseif($property->status === 'pending')
-                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100">
-                                                Pending
-                                            </span>
-                                        @elseif($property->status === 'rejected')
-                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100">
-                                                Rejected
-                                            </span>
-                                        @else
-                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100">
-                                                {{ $property->status ? Str::limit(ucfirst(strtolower($property->status)),3) : '-' }}
-                                            </span>
-                                        @endif
-                                    </td>
+                                   
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{$property->propertyType}}">{{ Str::limit($property->propertyType,10) }}</td>
                                     <!-- <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">
                                         @if($property->addedOn)
@@ -166,6 +148,26 @@
                                         @endif
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100" title="{{ $property->description }}">{{ Str::limit($property->description, 15) ?? '-' }}</td>
+                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100 text-center">
+                                        @if($property->status === 'approved' || $property->status === 'approved' || $property->status === 1 || $property->status === '1')
+                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100">
+                                                approved
+                                            </span>
+                                        @elseif($property->status === 'pendingVerification' || $property->status === 'pending')
+                                            {{-- DIHAPUS: <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100"> --}}
+                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100">
+                                                Pending
+                                            </span>
+                                        @elseif($property->status === 'rejected')
+                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100">
+                                                Rejected
+                                            </span>
+                                        @else
+                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100">
+                                                {{ $property->status ? Str::limit(ucfirst(strtolower($property->status)),3) : '-' }}
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">
                                         @if($property->created_at)
                                             {{ \Carbon\Carbon::parse($property->created_at)->format('d/m/y') }}

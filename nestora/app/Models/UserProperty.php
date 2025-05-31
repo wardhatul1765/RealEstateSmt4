@@ -18,6 +18,7 @@ class UserProperty extends Model
         'price',
         'bedrooms',
         'bathrooms',
+        'type', // <<< PERBAIKAN 3: Ubah 'propertyType' menjadi 'type' sesuai dengan model Property terbaru
         'sizeMin',
         'furnishing',
         'status',
@@ -26,7 +27,7 @@ class UserProperty extends Model
         'image',
         'propertyType',
         'mainView',
-        'listingAgeCategory', // <<< PERBAIKAN 2: Ubah 'addedOn' menjadi 'listingAgeCategory'
+        'listing_age_category', // <<< PERBAIKAN 2: Ubah 'addedOn' menjadi 'listingAgeCategory'
         'propertyLabel',
     ];
 

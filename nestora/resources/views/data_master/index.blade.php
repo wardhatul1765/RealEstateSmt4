@@ -100,7 +100,7 @@
                                         @endphp
                                         {{ $furnish }}
                                     </td>
-                                    <td class="px-2 py-1 whitespace-nowrap" title="{{$property->propertyType}}">{{ Str::limit($property->propertyType, 15) }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap" title="{{$property->type}}">{{ Str::limit($property->type, 15) }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap" title="{{$property->mainView}}">{{ Str::limit($property->mainView, 10) ?? '-' }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap" title="{{$property->propertyLabel}}">{{ Str::limit($property->propertyLabel, 10) ?? '-' }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap">
@@ -133,12 +133,25 @@
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap" title="{{$property->description}}">{{ Str::limit($property->description, 20) ?? '-' }}</td>
                                     <td class="px-2 py-1 text-center whitespace-nowrap">
-                                        @if($property->status)
-                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100">Ver</span>
+                                        @if($property->status === 'approved')
+                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100">
+                                                Approved
+                                            </span>
+                                        @elseif($property->status === 'pendingVerification')
+                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100">
+                                                Pending
+                                            </span>
+                                        @elseif($property->status === 'rejected')
+                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100">
+                                                Rejected
+                                            </span>
                                         @else
-                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100">Not</span>
+                                            <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100">
+                                                Unknown
+                                            </span>
                                         @endif
                                     </td>
+
                                     {{-- Menggunakan created_at, diformat d/m/y --}}
                                     <td class="px-2 py-1 whitespace-nowrap">{{ $property->created_at ? Carbon\Carbon::parse($property->created_at)->format('d/m/y') : '-' }}</td>
                                     {{-- BARU: Menampilkan updated_at, diformat d/m/y H:i --}}
@@ -406,15 +419,18 @@ function masterProperti() {
         furnishingMapForPrediction: { '': null, 'Yes': 0, 'No': 1, 'Partly': 2 },
 
         formData: {
-            title: '', address: '', bedrooms: '', bathrooms: '', price: '',
-            sizeMin: '', furnishing: '', propertyType: 'Residential for Sale', 
-            status: true, mainView: '', propertyLabel: '', description: '',
+            title: '', address: '', bedrooms: '', bathrooms: '',
+            type: 'Residential for Sale', price: '',
+            sizeMin: '', furnishing: '', 
+            status: 'approved', mainView: '', propertyLabel: '', description: '',
             // created_at DIHAPUS dari formData karena diurus Laravel
             // addedOn bisa ditambahkan di sini JIKA merupakan field yang diinput/dimanage manual oleh user
             // Misal: addedOn: '', 
             price_mode: 'manual',
             images: [], 
+            listing_age_category: 'kurang dari 3 bulan',
             existingImages: [] 
+            
         },
 
         init() {
@@ -487,12 +503,12 @@ function masterProperti() {
         resetAlpineFormData() {
             // const today = this.getTodayDate(); // Tidak lagi diperlukan untuk created_at
             this.formData = {
-                title: '', address: '', bedrooms: '', bathrooms: '', price: '',
-                sizeMin: '', furnishing: '', propertyType: 'Residential for Sale',
-                status: true, mainView: '', propertyLabel: '', description: '',
+                title: '', address: '', bedrooms: '', bathrooms: '', type: 'Residential for Sale', price: '',
+                sizeMin: '', furnishing: '', 
+                status: 'approved', mainView: '', propertyLabel: '', description: '',
                 // created_at DIHAPUS
                 // Jika ada addedOn yang manual: addedOn: today,
-                price_mode: 'manual', images: [], existingImages: []
+                price_mode: 'manual', images: [], listing_age_category: 'kurang dari 3 bulan', existingImages: []
             };
             const imagesUploadInput = document.getElementById('images_upload_input');
             if (imagesUploadInput) imagesUploadInput.value = ''; 
@@ -519,14 +535,15 @@ function masterProperti() {
                 this.formData.address = data.address || '';
                 this.formData.bedrooms = data.bedrooms === null ? '' : data.bedrooms;
                 this.formData.bathrooms = data.bathrooms === null ? '' : data.bathrooms;
+                // this.formData.type = data.type || 'Residential for Sale';
                 this.formData.price = data.price === null ? '' : data.price;
                 this.formData.sizeMin = data.sizeMin === null ? '' : data.sizeMin;
                 this.formData.furnishing = data.furnishing || '';
-                this.formData.propertyType = data.propertyType || 'Residential for Sale';
                 this.formData.status = !!data.status; 
                 this.formData.mainView = data.mainView || '';
                 this.formData.propertyLabel = data.propertyLabel || '';
                 this.formData.description = data.description || '';
+                // this.formData.listing_age_category = data.listing_age_category || 'N/A';
                 // created_at DIHAPUS dari pengisian formData, karena tidak diubah oleh user
                 // Jika ada addedOn yang manual, isi di sini:
                 // this.formData.addedOn = data.addedOn ? new Date(data.addedOn).toISOString().split('T')[0] : this.getTodayDate();
@@ -634,18 +651,19 @@ function masterProperti() {
             formDataToSend.set('address', this.formData.address);
             formDataToSend.set('bedrooms', this.formData.bedrooms);
             formDataToSend.set('bathrooms', this.formData.bathrooms);
+            formDataToSend.set('type', this.formData.type);
             formDataToSend.set('price', this.formData.price);
             formDataToSend.set('sizeMin', this.formData.sizeMin);
             formDataToSend.set('furnishing', this.formData.furnishing);
-            formDataToSend.set('propertyType', this.formData.propertyType);
             formDataToSend.set('mainView', this.formData.mainView);
             formDataToSend.set('propertyLabel', this.formData.propertyLabel);
             formDataToSend.set('description', this.formData.description);
             // created_at DIHAPUS dari pengiriman form
             // Jika ada addedOn yang manual, tambahkan di sini:
             // formDataToSend.set('addedOn', this.formData.addedOn);
-            formDataToSend.set('status', this.formData.status ? '1' : '0');
+            formDataToSend.set('status', this.formData.status ? 'approved' : 'pendingVerification'); 
             formDataToSend.delete('images[]');
+            formDataToSend.set('listing_age_category', this.formData.listing_age_category);
 
             if (this.formData.images && this.formData.images.length > 0) {
                 this.formData.images.forEach((file) => {

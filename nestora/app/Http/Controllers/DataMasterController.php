@@ -55,18 +55,19 @@ class DataMasterController extends Controller
             'address' => 'nullable|string|max:1000',
             'bedrooms' => 'nullable|integer|min:0',
             'bathrooms' => 'nullable|integer|min:0',
+            'type' => 'nullable|string|max:100', // Sesuai data Alpine
             'price' => 'nullable|numeric|min:0',
             'sizeMin' => 'nullable|numeric|min:0',
-            'propertyType' => 'nullable|string|max:100', // Sesuai data Alpine
             'furnishing' => 'nullable|string|in:Yes,No,Partly',
-            'status' => 'required|in:0,1', // Input dari form akan '0' atau '1'
+            'status' => 'required|string', 
             'created_at' => 'nullable|date_format:Y-m-d',
             'mainView' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:5000', // Tambah max length jika perlu
             'propertyLabel' => 'nullable|string|max:255',
             // 'user_id' => 'nullable|exists:users,id', // Jika ada relasi ke user
             'images' => 'nullable|array', // 'images' adalah nama input dari form untuk file
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048' // Validasi setiap file
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048', // Validasi setiap file
+            'listing_age_category' => 'nullable|string', // Tambahkan sesuai kebutuhan
         ];
 
         // Jika update, beberapa field mungkin tidak wajib atau punya aturan berbeda
