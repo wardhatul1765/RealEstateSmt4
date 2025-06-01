@@ -17,7 +17,8 @@ class ManajemenPropertiController extends Controller
         $searchTerm = $request->input('search');
 
         // Memulai query
-        $query = UserProperty::query();
+       $query = UserProperty::where('status', '!=', 'rejected')
+        ->where('status', '!=', false);
 
         // Jika ada input pencarian, tambahkan kondisi where
         if ($searchTerm) {
@@ -63,7 +64,7 @@ class ManajemenPropertiController extends Controller
     {
         // Mengambil properti yang statusnya false (belum disetujui/pending)
         // Menggunakan model Property dan field 'status' (boolean)
-        $properties = UserProperty::where('status', 'pendingVerification')->paginate(10);
+        $properties = UserProperty::where('status', false)->paginate(10);
 
         return view('manajemen-properti.persetujuan', compact('properties'));
     }

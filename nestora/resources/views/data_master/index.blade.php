@@ -100,7 +100,7 @@
                                         @endphp
                                         {{ $furnish }}
                                     </td>
-                                    <td class="px-2 py-1 whitespace-nowrap" title="{{$property->type}}">{{ Str::limit($property->type, 15) }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap" title="{{$property->propertyType}}">{{ Str::limit($property->propertyType, 15) }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap" title="{{$property->mainView}}">{{ Str::limit($property->mainView, 10) ?? '-' }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap" title="{{$property->propertyLabel}}">{{ Str::limit($property->propertyLabel, 10) ?? '-' }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap">
@@ -420,7 +420,7 @@ function masterProperti() {
 
         formData: {
             title: '', address: '', bedrooms: '', bathrooms: '',
-            type: 'Residential for Sale', price: '',
+            propertyType: 'Residential for Sale', price: '',
             sizeMin: '', furnishing: '', 
             status: 'approved', mainView: '', propertyLabel: '', description: '',
             // created_at DIHAPUS dari formData karena diurus Laravel
@@ -503,7 +503,7 @@ function masterProperti() {
         resetAlpineFormData() {
             // const today = this.getTodayDate(); // Tidak lagi diperlukan untuk created_at
             this.formData = {
-                title: '', address: '', bedrooms: '', bathrooms: '', type: 'Residential for Sale', price: '',
+                title: '', address: '', bedrooms: '', bathrooms: '', propertyType: 'Residential for Sale', price: '',
                 sizeMin: '', furnishing: '', 
                 status: 'approved', mainView: '', propertyLabel: '', description: '',
                 // created_at DIHAPUS
@@ -651,7 +651,7 @@ function masterProperti() {
             formDataToSend.set('address', this.formData.address);
             formDataToSend.set('bedrooms', this.formData.bedrooms);
             formDataToSend.set('bathrooms', this.formData.bathrooms);
-            formDataToSend.set('type', this.formData.type);
+            formDataToSend.set('propertyType', this.formData.propertyType);
             formDataToSend.set('price', this.formData.price);
             formDataToSend.set('sizeMin', this.formData.sizeMin);
             formDataToSend.set('furnishing', this.formData.furnishing);

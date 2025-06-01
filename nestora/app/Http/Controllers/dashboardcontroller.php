@@ -15,7 +15,7 @@ class DashboardController extends Controller
         try {
             // Harga rata-rata properti
             $averagePrice = UserProperty::avg('price');
-            $averagePriceFormatted = 'Rp ' . number_format($averagePrice ?? 0, 0, ',', '.');
+            $averagePriceFormatted = 'AED ' . number_format($averagePrice ?? 0, 0, ',', '.');
 
             // Luas rata-rata properti (m² ke sqft)
             $averageSizeM2 = UserProperty::avg('sizeMin');
@@ -48,7 +48,7 @@ class DashboardController extends Controller
                 $furnishingDistribution['data'][] = $item->count;
             }
 
-            // Ukuran vs Harga Chart
+            // Ukuran vs Harga Chart (Luas dalam sqft)
             $sizePriceData = UserProperty::select('sizeMin', 'price')
                 ->whereNotNull('sizeMin')
                 ->whereNotNull('price')
@@ -56,7 +56,7 @@ class DashboardController extends Controller
                 ->where('price', '>', 0)
                 ->limit(500)
                 ->get()
-                ->map(fn($item) => ['x' => (float) $item->sizeMin, 'y' => (float) $item->price])
+                ->map(fn($item) => ['x' => (float) $item->sizeMin * 10.7639, 'y' => (float) $item->price])
                 ->values()
                 ->toArray();
 
@@ -102,7 +102,7 @@ class DashboardController extends Controller
                 'averageSize' => round($averageSizeSqft, 2),
                 'propertiBelumTerverifikasi' => UserProperty::where('isVerified', false)->count(),
                 'priceDistribution' => [
-                    'labels' => array_map(fn($range) => 'Rp ' . number_format($range / 1000000, 0) . 'M', array_keys($priceDistribution)),
+                    'labels' => array_map(fn($range) => 'AED ' . number_format($range / 1000000, 0) . 'M', array_keys($priceDistribution)),
                     'data' => array_values($priceDistribution)
                 ],
                 'furnishingDistribution' => $furnishingDistribution,
