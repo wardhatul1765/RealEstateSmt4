@@ -44,6 +44,8 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/predict-price', [PredictionController::class, 'predictPrice']);
 });
 
+Route::post('/refresh', [APIAuthController::class, 'refresh']);
+
 Route::get('/serve-image/properties/{filename}', function ($filename) {
     $cleanedFilename = basename($filename);
     $path = storage_path('app/public/properties/' . $cleanedFilename);
@@ -66,3 +68,16 @@ Route::get('/serve-image/properties/{filename}', function ($filename) {
     $response = response($file, 200)->header('Content-Type', $type);
     return $response;
 })->where('filename', '.*')->name('property.image.serve');
+
+// TAMBAHKAN ROUTE BARU INI untuk menyajikan gambar profil
+Route::get('/serve-image/profile/{filename}', function ($filename) {
+    $cleanedFilename = basename($filename);
+    // PENTING: Path disesuaikan ke direktori gambar profil
+    $path = storage_path('app/public/profile_images/' . $cleanedFilename); 
+    if (!File::exists($path)) {
+        abort(404, 'Profile image not found.');
+    }
+    $file = File::get($path);
+    $type = File::mimeType($path);
+    return response($file, 200)->header('Content-Type', $type);
+})->where('filename', '.*')->name('profile.image.serve'); // Beri nama route

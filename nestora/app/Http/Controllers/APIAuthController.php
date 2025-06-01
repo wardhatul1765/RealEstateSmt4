@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use Illuminate\Support\Facades\Storage; // Import Storage
+use Illuminate\Support\Facades\Log; // Import Log
 
 class APIAuthController extends Controller
 {
@@ -162,31 +164,65 @@ class APIAuthController extends Controller
             return response()->json(['success' => false, 'message' => 'User not found or not authenticated'], 404);
         }
 
-        $request->validate([
+        // Validasi 'remove_profile_image' sebagai boolean
+        $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
-            'bio' => 'nullable|string|max:1000', // Bio bisa null atau string
-            // Tambahkan validasi untuk 'phone' jika bisa diubah
-            // 'phone' => 'sometimes|string|max:15',
+            'bio' => 'nullable|string|max:1000',
+            'phone' => 'sometimes|string|max:20',
+            'profile_image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'remove_profile_image' => 'sometimes|boolean' // Validasi sebagai boolean (terima 1, 0, "1", "0", true, false)
         ]);
 
-        // Update field hanya jika ada di request
-        if ($request->filled('name')) { // 'filled' mengecek apakah ada dan tidak kosong
+        if ($validator->fails()) {
+            Log::error('Update profile validation failed: ', $validator->errors()->toArray());
+            return response()->json([
+                'success' => false,
+                'message' => 'Input tidak valid.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        Log::info('Update profile request data (setelah validasi): ', $request->all());
+        Log::info('Nilai remove_profile_image dari request: ' . $request->input('remove_profile_image') . ' (Tipe: ' . gettype($request->input('remove_profile_image')) . ')');
+
+        if ($request->filled('name')) {
             $user->name = $request->name;
         }
-        if ($request->has('bio')) { // 'has' mengecek apakah key 'bio' ada (bisa jadi string kosong)
+        if ($request->has('bio')) {
             $user->bio = $request->bio;
         }
-        // if ($request->filled('phone')) {
-        //     $user->phone = $request->phone;
-        // }
+        if ($request->filled('phone')) {
+            $user->phone = $request->phone;
+        }
+
+        // Gunakan $request->boolean() untuk handle 1/0/"1"/"0"/true/false
+        if ($request->has('remove_profile_image') && $request->boolean('remove_profile_image')) {
+            Log::info('Attempting to remove profile image based on request->boolean().');
+            if ($user->getRawOriginal('profile_image') && Storage::disk('public')->exists($user->getRawOriginal('profile_image'))) {
+                Storage::disk('public')->delete($user->getRawOriginal('profile_image'));
+                Log::info('Old profile image deleted: ' . $user->getRawOriginal('profile_image'));
+            }
+            $user->profile_image = null;
+        }
+
+        if ($request->hasFile('profile_image_file')) {
+            Log::info('New profile image file detected.');
+            if ($user->getRawOriginal('profile_image') && Storage::disk('public')->exists($user->getRawOriginal('profile_image'))) {
+                Storage::disk('public')->delete($user->getRawOriginal('profile_image'));
+                Log::info('Old profile image deleted before new upload: ' . $user->getRawOriginal('profile_image'));
+            }
+            $path = $request->file('profile_image_file')->store('profile_images', 'public');
+            $user->profile_image = $path;
+            Log::info('New profile image stored at: ' . $path);
+        }
 
         $user->save();
+        $user->refresh();
 
-        // Kembalikan data user yang sudah terupdate
         return response()->json([
             'success' => true,
             'message' => 'Profil berhasil diperbarui.',
-            'data' => [ // Kirim kembali objek user yang sudah diupdate
+            'data' => [
                 'id' => $user->_id,
                 'name' => $user->name,
                 'email' => $user->email,
