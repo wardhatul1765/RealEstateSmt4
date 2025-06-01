@@ -419,7 +419,7 @@ public function showPublicProperty(Request $request, $id)
             return response()->json(['success' => false, 'message' => 'Property not found'], 404);
         }
 
-        $property_id_to_match = $property->_id;
+        $property_id_to_match = $property->_id; 
         Log::info("APIPropertyController (Stats): ID Properti yang akan dicocokkan di property_views: " . $property_id_to_match . " (tipe: " . gettype($property_id_to_match) . ")");
 
         $user = auth('api')->user();
@@ -428,86 +428,109 @@ public function showPublicProperty(Request $request, $id)
             return response()->json(['success' => false, 'message' => 'Unauthorized to view statistics for this property'], 403);
         }
 
-        // Pengecekan class_exists sekali saja di awal (opsional, tapi baik untuk debugging lingkungan)
-        if (!class_exists('MongoDB\\BSON\\UTCDateTime')) {
-            Log::critical('KRITIKAL: Kelas MongoDB\\BSON\\UTCDateTime tidak tersedia saat RUNTIME. Ekstensi PHP mongodb kemungkinan tidak aktif untuk PROSES WEB SERVER. Cek php.ini web server dan restart.');
-            return response()->json(['success' => false, 'message' => 'Kesalahan konfigurasi server: MongoDB UTCDateTime class not found.'], 500);
-        }
-
-        // Statistik Harian (30 hari terakhir)
         $dailyStats = [];
-        $endDateDailyCar = Carbon::now('UTC')->endOfDay();
-        $startDateDailyCar = Carbon::now('UTC')->subDays(29)->startOfDay();
-        $endDateDailyCar = Carbon::now('UTC')->endOfDay();
+        $endDateDaily = new UTCDateTime(Carbon::now('UTC')->endOfDay()->getTimestamp() * 1000);
+        $startDateDaily = new UTCDateTime(Carbon::now('UTC')->subDays(29)->startOfDay()->getTimestamp() * 1000);
 
-        Log::info("Eloquent whereBetween Daily Range (UTC Carbon):", [$startDateDailyCar, $endDateDailyCar]);
+        Log::info("MongoDB Daily Range (UTCDateTime):", ['$gte' => $startDateDaily, '$lte' => $endDateDaily]);
 
-        $dailyRawCursor = PropertyView::where('property_id', $property_id_to_match)
-            ->whereBetween('viewed_at', [$startDateDailyCar, $endDateDailyCar])
-            ->raw(function($collection) {
-                return $collection->aggregate([
-                    [
-                        '$group' => [
-                            '_id' => ['$dateToString' => ['format' => '%Y-%m-%d', 'date' => '$viewed_at', 'timezone' => 'Asia/Jakarta']],
-                            'count' => ['$sum' => 1]
-                        ]
-                    ],
-                    ['$sort' => ['_id' => 1]]
-                ]);
-            });
-        $dailyRawArray = [];
-        if ($dailyRawCursor instanceof \Traversable || is_array($dailyRawCursor)) {
-            foreach ($dailyRawCursor as $item) {
-                $dailyRawArray[] = $item;
-            }
-        }
-        Log::info("Raw Daily Data (Eloquent whereBetween + Raw Group):", $dailyRawArray);
+        $dailyRawCursor = PropertyView::raw(function($collection) use ($property_id_to_match, $startDateDaily, $endDateDaily) {
+            return $collection->aggregate([
+                ['$match' => ['property_id' => $property_id_to_match, 'viewed_at' => ['$gte' => $startDateDaily, '$lte' => $endDateDaily]]],
+                ['$group' => ['_id' => ['$dateToString' => ['format' => '%Y-%m-%d', 'date' => '$viewed_at', 'timezone' => 'Asia/Jakarta']], 'count' => ['$sum' => 1]]],
+                ['$sort' => ['_id' => 1]]
+            ]);
+        });
 
-        for ($dateLoop = $startDateDailyCar->copy(); $dateLoop->lte($endDateDailyCar); $dateLoop->addDay()) {
-            $dailyStats[$dateLoop->format('Y-m-d')] = 0;
-        }
-        foreach ($dailyRawArray as $day) {
-            if (isset($day['_id']) && is_string($day['_id']) && isset($day['count'])) {
-                 $dailyStats[$day['_id']] = $day['count'];
-            }
-        }
+        $dailyRawArray = iterator_to_array($dailyRawCursor);
+        Log::info("Raw Daily Data (setelah agregasi dengan MongoDB dan iterator_to_array):", $dailyRawArray);
 
-        // Statistik Bulanan (12 bulan terakhir)
-        $monthlyStats = [];
-        $endDateMonthlyCar = Carbon::now('UTC')->endOfMonth();
-        $startDateMonthlyCar = Carbon::now('UTC')->subMonths(11)->startOfMonth();
-        $endDateMonthlyCar = Carbon::now('UTC')->endOfMonth();
-        Log::info("Eloquent whereBetween Monthly Range (UTC Carbon):", [$startDateMonthlyCar, $endDateMonthlyCar]);
-        $monthlyRawCursor = PropertyView::where('property_id', $property_id_to_match)
-            ->whereBetween('viewed_at', [$startDateMonthlyCar, $endDateMonthlyCar])
-            ->raw(function($collection) {
-                return $collection->aggregate([
-                    [
-                        '$group' => [
-                            '_id' => ['$dateToString' => ['format' => '%Y-%m', 'date' => '$viewed_at', 'timezone' => 'Asia/Jakarta']],
-                            'count' => ['$sum' => 1]
-                        ]
-                    ],
-                    ['$sort' => ['_id' => 1]]
-                ]);
-            });
-        $monthlyRawArray = [];
-        if ($monthlyRawCursor instanceof \Traversable || is_array($monthlyRawCursor)) {
-            foreach ($monthlyRawCursor as $item) {
-                $monthlyRawArray[] = $item;
-            }
+        $currentDateLoop = Carbon::now('UTC')->subDays(29)->startOfDay();
+        $endDateLoop = Carbon::now('UTC')->endOfDay();
+        while ($currentDateLoop->lte($endDateLoop)) {
+            $dailyStats[$currentDateLoop->format('Y-m-d')] = 0;
+            $currentDateLoop->addDay();
         }
-        Log::info("Raw Monthly Data (Eloquent whereBetween + Raw Group):", $monthlyRawArray);
         
-        for ($dateLoop = $startDateMonthlyCar->copy(); $dateLoop->lte($endDateMonthlyCar); $dateLoop->addMonth()) {
-            $monthlyStats[$dateLoop->format('Y-m')] = 0;
-        }
-        foreach ($monthlyRawArray as $month) {
-            if (isset($month['_id']) && is_string($month['_id']) && isset($month['count'])) {
-                $monthlyStats[$month['_id']] = $month['count'];
+        // Robust extraction for daily stats
+        foreach ($dailyRawArray as $item) {
+            $dateKey = null;
+            $countVal = null;
+            if (isset($item['App\\Models\\PropertyView']) && is_array($item['App\\Models\\PropertyView'])) {
+                $nestedData = $item['App\\Models\\PropertyView'];
+                if (isset($nestedData['id']) && is_string($nestedData['id']) && isset($nestedData['count'])) {
+                    $dateKey = $nestedData['id'];
+                    $countVal = $nestedData['count'];
+                }
+            } elseif (isset($item['_id']) && is_string($item['_id']) && isset($item['count'])) {
+                $dateKey = $item['_id'];
+                $countVal = $item['count'];
+            }
+            if ($dateKey !== null && $countVal !== null) {
+                if (array_key_exists($dateKey, $dailyStats)) {
+                    $dailyStats[$dateKey] = $countVal;
+                } else {
+                    Log::warning("DEBUG Daily: Kunci tanggal '$dateKey' dari agregasi tidak ditemukan di dailyStats yang diinisialisasi.");
+                }
+            } else {
+                Log::warning("DEBUG Daily: Tidak bisa mengekstrak '_id' (sebagai dateKey) dan 'count' dari item agregasi harian.", (array)$item);
             }
         }
-            
+
+        $monthlyStats = [];
+        $endDateMonthly = new UTCDateTime(Carbon::now('UTC')->endOfMonth()->getTimestamp() * 1000);
+        $startDateMonthly = new UTCDateTime(Carbon::now('UTC')->subMonths(11)->startOfMonth()->getTimestamp() * 1000);
+        
+        Log::info("MongoDB Monthly Range (UTCDateTime):", ['$gte' => $startDateMonthly, '$lte' => $endDateMonthly]);
+
+        $monthlyRawCursor = PropertyView::raw(function($collection) use ($property_id_to_match, $startDateMonthly, $endDateMonthly) {
+            return $collection->aggregate([
+                ['$match' => ['property_id' => $property_id_to_match, 'viewed_at' => ['$gte' => $startDateMonthly, '$lte' => $endDateMonthly]]],
+                ['$group' => ['_id' => ['$dateToString' => ['format' => '%Y-%m', 'date' => '$viewed_at', 'timezone' => 'Asia/Jakarta']], 'count' => ['$sum' => 1]]],
+                ['$sort' => ['_id' => 1]]
+            ]);
+        });
+        
+        $monthlyRawArray = iterator_to_array($monthlyRawCursor);
+        Log::info("Raw Monthly Data (setelah agregasi dengan MongoDB dan iterator_to_array):", $monthlyRawArray);
+        
+        $currentMonthLoop = Carbon::now('UTC')->subMonths(11)->startOfMonth();
+        $endMonthLoop = Carbon::now('UTC')->endOfMonth();
+        while ($currentMonthLoop->lte($endMonthLoop)) {
+            $monthlyStats[$currentMonthLoop->format('Y-m')] = 0;
+            $currentMonthLoop->addMonth();
+        }
+        // Robust extraction for monthly stats
+        foreach ($monthlyRawArray as $item) {
+            $dateKey = null;
+            $countVal = null;
+            if (isset($item['App\\Models\\PropertyView']) && is_array($item['App\\Models\\PropertyView'])) {
+                $nestedData = $item['App\\Models\\PropertyView'];
+                if (isset($nestedData['id']) && is_string($nestedData['id']) && isset($nestedData['count'])) {
+                    $dateKey = $nestedData['id'];
+                    $countVal = $nestedData['count'];
+                }
+            } elseif (isset($item['attributes']) && is_array($item['attributes'])) {
+                $nestedData = $item['attributes'];
+                if (isset($nestedData['id']) && is_string($nestedData['id']) && isset($nestedData['count'])) {
+                    $dateKey = $nestedData['id'];
+                    $countVal = $nestedData['count'];
+                }
+            } elseif (isset($item['_id']) && is_string($item['_id']) && isset($item['count'])) {
+                $dateKey = $item['_id'];
+                $countVal = $item['count'];
+            }
+            if ($dateKey !== null && $countVal !== null) {
+                if (array_key_exists($dateKey, $monthlyStats)) {
+                    $monthlyStats[$dateKey] = $countVal;
+                } else {
+                    Log::warning("DEBUG Monthly: Kunci tanggal '$dateKey' dari agregasi tidak ditemukan di monthlyStats yang diinisialisasi.");
+                }
+            } else {
+                Log::warning("DEBUG Monthly: Tidak bisa mengekstrak '_id' (sebagai dateKey) dan 'count' dari item agregasi bulanan.", (array)$item);
+            }
+        }
+        
         Log::info("APIPropertyController (Stats): Final Daily Stats for {$property_id_to_match}:", $dailyStats);
         Log::info("APIPropertyController (Stats): Final Monthly Stats for {$property_id_to_match}:", $monthlyStats);
 
