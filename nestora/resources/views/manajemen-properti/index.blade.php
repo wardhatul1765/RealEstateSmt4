@@ -136,7 +136,8 @@
 
                                         @if(!empty($images))
                                             <div class="flex items-center">
-                                                <img src="{{ $images[0] }}" alt="Thumb"
+                                                <img  src="{{ asset('storage/properties/' . $images[0]) }}"
+                                                 alt="Thumb"
                                                      class="h-6 w-6 object-cover rounded" {{-- DIHAPUS: cursor-pointer open-image-gallery --}}
                                                      {{-- DIHAPUS: data-images="{{ htmlspecialchars(json_encode($images), ENT_QUOTES, 'UTF-8') }}" --}}
                                                      onerror="this.style.display='none'; if(this.nextElementSibling && this.nextElementSibling.tagName === 'SPAN') { this.nextElementSibling.classList.remove('ml-1'); this.nextElementSibling.textContent = 'N/A'; } else { const naSpan = document.createElement('span'); naSpan.textContent = ' N/A'; this.parentElement.appendChild(naSpan); }">

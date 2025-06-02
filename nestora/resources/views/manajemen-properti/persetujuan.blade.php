@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('Persetujuan Iklan Properti') }}
         </h2>
     </x-slot>
@@ -69,7 +69,6 @@
                                 <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Label</th>
                                 <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Desc.</th>
                                 <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Image</th>
-                                <!-- <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Added</th> -->
                                 <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                 <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                             </tr>
@@ -106,53 +105,47 @@
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">
                                         @php
                                             $images = [];
-                                            if (is_string($property->image)) { // Jika image adalah string JSON
+                                            if (is_string($property->image)) {
                                                 $decodedImages = json_decode($property->image, true);
                                                 if (json_last_error() === JSON_ERROR_NONE && is_array($decodedImages)) {
                                                     $images = $decodedImages;
                                                 } elseif (!empty($property->image)) {
-                                                    $images = [$property->image]; // Anggap sebagai satu gambar jika bukan JSON array
+                                                    $images = [$property->image];
                                                 }
-                                            } elseif (is_array($property->image)) { // Jika sudah array
+                                            } elseif (is_array($property->image)) {
                                                 $images = $property->image;
                                             }
                                         @endphp
 
                                         @if(!empty($images))
                                             <div class="flex items-center space-x-2">
-                                                <img src="{{ $images[0] }}" alt="Property image thumbnail"
-                                                     class="h-8 w-8 object-cover rounded cursor-pointer open-image-gallery"
-                                                     data-images="{{ htmlspecialchars(json_encode($images), ENT_QUOTES, 'UTF-8') }}">
+                                                <img 
+                                                    src="{{ asset('storage/properties/' . $images[0]) }}" 
+                                                    alt="Property image thumbnail"
+                                                    class="h-8 w-8 object-cover rounded cursor-pointer open-image-gallery"
+                                                    data-images="{{ htmlspecialchars(json_encode($images), ENT_QUOTES, 'UTF-8') }}">
+                                                
                                                 <button type="button"
                                                         class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-200 text-xs open-image-gallery"
                                                         data-images="{{ htmlspecialchars(json_encode($images), ENT_QUOTES, 'UTF-8') }}">
-                                                    Lihat ({{ count($images) }})
+                                                    ({{ count($images) }})
                                                 </button>
                                             </div>
                                         @else
                                             -
                                         @endif
                                     </td>
-                                    <!-- <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 dark:text-gray-100">
-                                        @if($property->addedOn)
-                                            {{ \Carbon\Carbon::parse($property->addedOn)->format('d/m/y') }}
-                                        @elseif($property->created_at)
-                                            {{ \Carbon\Carbon::parse($property->created_at)->format('d/m/y') }}
-                                        @else
-                                            -
-                                        @endif
-                                    </td> -->
                                     <td class="px-2 py-1 whitespace-nowrap text-xs text-yellow-600 dark:text-yellow-400">
                                         Pending
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap text-sm font-medium">
                                         <div class="flex space-x-1">
-                                            <form action="{{ route('manajemen-properti.approve', $property->id ?? $property->_id) }}" method="POST">
+                                            <form action="{{ route('manajemen-properti.approve', $property->id ?? $property->_id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin MENYETUJUI properti ini?');">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" class="inline-flex items-center px-2 py-1 bg-green-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-600 active:bg-green-700 focus:outline-none focus:border-green-700 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150">Appr</button>
                                             </form>
-                                            <form action="{{ route('manajemen-properti.reject', $property->id ?? $property->_id) }}" method="POST">
+                                            <form action="{{ route('manajemen-properti.reject', $property->id ?? $property->_id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin MENOLAK properti ini?');">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" class="inline-flex items-center px-2 py-1 bg-red-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-600 active:bg-red-700 focus:outline-none focus:border-red-700 focus:ring ring-red-300 disabled:opacity-25 transition ease-in-out duration-150">Rej</button>
@@ -183,6 +176,7 @@
         </div>
     </div>
 
+    {{-- Modal Galeri Gambar (Tidak ada perubahan) --}}
     <div id="imageGalleryModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden p-4">
         <div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-xl relative max-w-xl w-full max-h-[90vh] flex flex-col">
             <button id="closeGalleryModal" class="absolute top-2 right-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 text-2xl leading-none">&times;</button>
@@ -197,10 +191,11 @@
             </div>
         </div>
     </div>
-
 </x-app-layout>
 
 @push('scripts')
+
+{{-- === [START] JAVASCRIPT DENGAN PERBAIKAN === --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('imageGalleryModal');
@@ -209,19 +204,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const prevButton = document.getElementById('prevImage');
     const nextButton = document.getElementById('nextImage');
     const imageCounter = document.getElementById('imageCounter');
-    const galleryTriggers = document.querySelectorAll('.open-image-gallery');
 
     let currentImages = [];
     let currentIndex = 0;
 
     function showImage(index) {
-        if (currentImages.length === 0) return;
+        if (!currentImages || currentImages.length === 0) return;
+        
         galleryImage.src = currentImages[index];
         imageCounter.textContent = `${index + 1} / ${currentImages.length}`;
         prevButton.disabled = index === 0;
         nextButton.disabled = index === currentImages.length - 1;
 
-        // Sembunyikan tombol jika hanya ada 1 gambar
         if (currentImages.length <= 1) {
             prevButton.classList.add('hidden');
             nextButton.classList.add('hidden');
@@ -233,9 +227,21 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    galleryTriggers.forEach(trigger => {
-        trigger.addEventListener('click', function () {
-            const imagesData = this.dataset.images;
+    function closeModal() {
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+        currentImages = [];
+    }
+
+    // === PERBAIKAN: Menggunakan Event Delegation ===
+    document.body.addEventListener('click', function(event) {
+        // Cek apakah elemen yang di-klik atau parent-nya memiliki kelas .open-image-gallery
+        const trigger = event.target.closest('.open-image-gallery');
+
+        if (trigger) {
+            event.preventDefault(); // Mencegah aksi default jika trigger adalah link
+            const imagesData = trigger.dataset.images;
+            
             if (imagesData) {
                 try {
                     currentImages = JSON.parse(imagesData);
@@ -243,26 +249,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         currentIndex = 0;
                         showImage(currentIndex);
                         modal.classList.remove('hidden');
-                        // Tambahkan class untuk mencegah scroll di body saat modal terbuka
                         document.body.classList.add('overflow-hidden');
-                    } else {
-                        console.error('No images found or data is not an array.');
-                        currentImages = []; // Reset jika data tidak valid
                     }
                 } catch (e) {
-                    console.error('Error parsing image data:', e);
-                    currentImages = []; // Reset jika parsing gagal
+                    console.error('Gagal mem-parsing data gambar:', e);
                 }
             }
-        });
+        }
     });
 
-    closeButton.addEventListener('click', function () {
-        modal.classList.add('hidden');
-        // Hapus class untuk mengembalikan scroll di body
-        document.body.classList.remove('overflow-hidden');
-        currentImages = []; // Kosongkan array gambar saat modal ditutup
-    });
+    // Listener untuk kontrol modal (Tombol close, prev, next, dll.)
+    closeButton.addEventListener('click', closeModal);
 
     prevButton.addEventListener('click', function () {
         if (currentIndex > 0) {
@@ -278,23 +275,18 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Tutup modal jika klik di luar area konten modal
     modal.addEventListener('click', function(event) {
         if (event.target === modal) {
-            modal.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-            currentImages = [];
+            closeModal();
         }
     });
 
-    // Tutup modal dengan tombol Escape
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
-            modal.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-            currentImages = [];
+            closeModal();
         }
     });
 });
 </script>
+{{-- === [END] JAVASCRIPT DENGAN PERBAIKAN === --}}
 @endpush

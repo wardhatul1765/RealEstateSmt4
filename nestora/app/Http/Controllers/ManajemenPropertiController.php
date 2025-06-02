@@ -64,7 +64,7 @@ class ManajemenPropertiController extends Controller
     {
         // Mengambil properti yang statusnya false (belum disetujui/pending)
         // Menggunakan model Property dan field 'status' (boolean)
-        $properties = UserProperty::where('status', false)->paginate(10);
+        $properties = UserProperty::where('status', 'pendingVerification')->paginate(10);
 
         return view('manajemen-properti.persetujuan', compact('properties'));
     }

@@ -10,7 +10,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6">
 
-                {{-- Notifikasi --}}
+                {{-- Notifikasi Bawaan Laravel (Session) --}}
                 @if (session('success'))
                     <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
                          class="mb-4 p-4 bg-green-500 text-white rounded-lg text-sm" role="alert">
@@ -23,11 +23,19 @@
                         {{ session('error') }}
                     </div>
                 @endif
+
+                {{-- Notifikasi Dinamis Alpine.js --}}
                 <div x-show="predictionError && predictionError.length > 0" class="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 dark:bg-yellow-700 dark:text-yellow-100 dark:border-yellow-600 rounded-lg text-sm" role="alert" x-cloak>
                     <span class="font-bold">Info Prediksi:</span> <span x-text="predictionError"></span>
                 </div>
                 <div x-show="deleteError && deleteError.length > 0" class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 dark:bg-red-700 dark:text-red-100 dark:border-red-600 rounded-lg text-sm" role="alert" x-cloak>
                     <span class="font-bold">Error Hapus:</span> <span x-text="deleteError"></span>
+                </div>
+                {{-- [BARU] Notifikasi Sukses Dinamis --}}
+                <div x-show="successMessage && successMessage.length > 0"
+                     x-init="$watch('successMessage', value => { if (value) setTimeout(() => successMessage = '', 3500) })"
+                     class="mb-4 p-4 bg-green-500 text-white rounded-lg text-sm" role="alert" x-cloak>
+                    <span x-text="successMessage"></span>
                 </div>
 
 
@@ -76,7 +84,7 @@
                                 <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Deskripsi</th>
                                 <th class="px-2 py-2 text-center text-xs font-medium uppercase tracking-wider">Status</th>
                                 <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Created</th>
-                                <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Updated</th> {{-- BARU --}}
+                                <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Updated</th>
                                 <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Aksi</th>
                             </tr>
                         </thead>
@@ -119,7 +127,7 @@
                                         @if(!empty($imagesArr))
                                             <div class="flex items-center">
                                                 <img 
-                                                    src="{{ $imagesArr[0] ?? asset('images/placeholder.png') }}" 
+                                                    src="{{ asset('storage/properties/' . $imagesArr[0]) }}"
                                                     alt="Thumb"
                                                     class="h-6 w-6 object-cover rounded"
                                                     onerror="handleImageError(this)">
@@ -147,14 +155,11 @@
                                             </span>
                                         @else
                                             <span class="px-1.5 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100">
-                                                Unknown
+                                                {{ Str::title($property->status) }}
                                             </span>
                                         @endif
                                     </td>
-
-                                    {{-- Menggunakan created_at, diformat d/m/y --}}
                                     <td class="px-2 py-1 whitespace-nowrap">{{ $property->created_at ? Carbon\Carbon::parse($property->created_at)->format('d/m/y') : '-' }}</td>
-                                    {{-- BARU: Menampilkan updated_at, diformat d/m/y H:i --}}
                                     <td class="px-2 py-1 whitespace-nowrap">{{ $property->updated_at ? Carbon\Carbon::parse($property->updated_at)->format('d/m/y H:i') : '-' }}</td>
                                     <td class="px-2 py-1 flex space-x-1 whitespace-nowrap">
                                         <button @click="openModal('edit', {{ Js::from($property->id) }})"
@@ -170,7 +175,6 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    {{-- Menyesuaikan colspan menjadi 17 --}}
                                     <td colspan="17" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">Tidak ada data properti yang ditemukan.</td>
                                 </tr>
                             @endforelse
@@ -212,13 +216,7 @@
                 <form @submit.prevent="submitForm" id="propertyForm" method="POST" action="#" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="_method" id="formMethod" value="POST">
-                    {{-- Input created_at DIHAPUS karena Laravel otomatis mengelolanya --}}
-                    {{-- <input type="hidden" name="created_at" x-model="formData.created_at"> --}}
                     
-                    {{-- Jika Anda memiliki field tanggal khusus yang diinput user (misal addedOn), biarkan di sini --}}
-                    {{-- <input type="hidden" name="addedOn" x-model="formData.addedOn"> --}}
-
-
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                         {{-- Baris 1 --}}
                         <div>
@@ -258,6 +256,15 @@
                             </select>
                         </div>
                         <div>
+                            <label for="propertyType_form" class="block font-medium text-gray-700 dark:text-gray-300">Tipe Properti</label>
+                            <select name="propertyType" id="propertyType_form" x-model="formData.propertyType"
+                                    class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 focus:ring-purple-500 focus:border-purple-500">
+                                <template x-for="option in propertyTypeOptions" :key="option.value">
+                                    <option :value="option.value" x-text="option.text"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
                             <label for="mainView_form" class="block font-medium text-gray-700 dark:text-gray-300">Pemandangan Utama</label>
                             <select name="mainView" id="mainView_form" x-model="formData.mainView"
                                     class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 focus:ring-purple-500 focus:border-purple-500">
@@ -272,7 +279,7 @@
                             </select>
                         </div>
                         
-                        {{-- Baris Harga (dibuat span lebih lebar) --}}
+                        {{-- Baris Harga --}}
                         <div class="md:col-span-2 lg:col-span-2">
                             <label for="price_form_input" class="block font-medium text-gray-700 dark:text-gray-300">Harga (AED)</label>
                             <div class="flex items-center space-x-4 my-1">
@@ -338,9 +345,9 @@
                         {{-- Status Terverifikasi --}}
                         <div class="lg:col-span-1 flex items-end pb-1">
                             <label for="status_form_input" class="flex items-center font-medium text-gray-700 dark:text-gray-300">
-                                <input type="checkbox" name="status" id="status_form_input" value="1" x-model="formData.status"
+                                <input type="checkbox" name="status" id="status_form_input" value="approved" x-model="formData.status"
                                        class="rounded border-gray-300 dark:border-gray-600 text-purple-600 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-500 focus:ring-opacity-50 dark:bg-gray-700 dark:focus:ring-offset-gray-800">
-                                <span class="ms-2">Terverifikasi</span>
+                                <span class="ms-2">Terverifikasi (Approved)</span>
                             </label>
                         </div>
                     </div>
@@ -393,13 +400,22 @@ function masterProperti() {
         ajaxErrors: {}, 
         predictionError: '', 
         deleteError: '', 
+        successMessage: '', // [BARU] Untuk notifikasi sukses
         currentPropertyId: null, 
         propertyToDeleteId: null,
         propertyToDeleteUrl: '',
         propertyToDeleteName: '',
         isDeleting: false, 
         csrfToken: '', 
-
+        propertyTypeOptions: [
+            { value: '', text: 'Pilih Tipe Properti...' },
+            { value: 'Residential for Sale', text: 'Residensial (Dijual)' },
+            { value: 'Residential for Rent', text: 'Residensial (Disewa)' },
+            { value: 'Commercial for Sale', text: 'Komersial (Dijual)' },
+            { value: 'Commercial for Rent', text: 'Komersial (Disewa)' },
+            { value: 'Building', text: 'Gedung' },
+            { value: 'Plot', text: 'Kavling/Tanah' },
+        ],
         keywordOptions: [
             { value: '', text: 'Pilih Label Properti...' }, { value: 'luxury', text: 'Mewah (Luxury)' },
             { value: 'furnished', text: 'Berperabot (Furnished)' }, { value: 'spacious', text: 'Luas (Spacious)' },
@@ -420,17 +436,14 @@ function masterProperti() {
 
         formData: {
             title: '', address: '', bedrooms: '', bathrooms: '',
-            propertyType: 'Residential for Sale', price: '',
+            propertyType: '', price: '',
             sizeMin: '', furnishing: '', 
-            status: 'approved', mainView: '', propertyLabel: '', description: '',
-            // created_at DIHAPUS dari formData karena diurus Laravel
-            // addedOn bisa ditambahkan di sini JIKA merupakan field yang diinput/dimanage manual oleh user
-            // Misal: addedOn: '', 
+            status: 'approved', // Default status saat tambah baru, akan di-handle sebagai boolean true saat fetch
+            mainView: '', propertyLabel: '', description: '',
             price_mode: 'manual',
             images: [], 
-            listing_age_category: 'kurang dari 3 bulan',
+            listingAgeCategory: 'kurang dari 3 bulan',
             existingImages: [] 
-            
         },
 
         init() {
@@ -456,11 +469,9 @@ function masterProperti() {
             });
         },
 
-        getTodayDate() { return new Date().toISOString().slice(0,10); }, 
-
         handleImageFiles(event) {
             const files = Array.from(event.target.files);
-            this.formData.images = files.filter(file => file.type.startsWith('image/')).slice(0, 10);
+            this.formData.images = files.filter(file => file.type.startsWith('image/')).slice(0, 10); // Batasi maks 10 gambar
             if (files.length !== this.formData.images.length) {
                 this.ajaxErrors = { ...this.ajaxErrors, images: ['Beberapa file bukan gambar atau melebihi batas unggah (maks 10).'] };
             } else { if (this.ajaxErrors.images) delete this.ajaxErrors.images; }
@@ -470,28 +481,22 @@ function masterProperti() {
         removeImage(index) { this.formData.images.splice(index, 1); },
 
         openModal(mode, propertyId = null) {
-            console.log('Buka modal. Mode:', mode, 'ID:', propertyId);
-            this.ajaxErrors = {};
-            this.predictionError = '';
+            this.ajaxErrors = {}; this.predictionError = ''; this.deleteError = ''; this.successMessage = '';
             this.currentPropertyId = propertyId; 
 
             if (mode === 'add') {
                 this.resetAlpineFormData(); 
                 this.modalTitle = 'Tambah Properti Baru';
                 this.formAction = '{{ route("data-master.properti.store") }}'; 
-                const formMethodEl = document.getElementById('formMethod');
-                if(formMethodEl) formMethodEl.value = 'POST'; 
+                document.getElementById('formMethod').value = 'POST'; 
                 this.$dispatch('open-modal', 'propertyFormModal');
             } else if (mode === 'edit' && propertyId) {
                 this.resetAlpineFormData(); 
                 this.modalTitle = 'Edit Properti';
                 this.formAction = `{{ url('data-master/properti') }}/${propertyId}`; 
-                const formMethodEl = document.getElementById('formMethod');
-                if(formMethodEl) formMethodEl.value = 'PUT'; 
+                document.getElementById('formMethod').value = 'PUT'; 
                 this.$dispatch('open-modal', 'propertyFormModal'); 
                 this.fetchPropertyData(propertyId); 
-            } else {
-                console.warn('Panggilan openModal tidak valid:', mode, propertyId);
             }
         },
 
@@ -501,14 +506,11 @@ function masterProperti() {
         },
 
         resetAlpineFormData() {
-            // const today = this.getTodayDate(); // Tidak lagi diperlukan untuk created_at
             this.formData = {
-                title: '', address: '', bedrooms: '', bathrooms: '', propertyType: 'Residential for Sale', price: '',
+                title: '', address: '', bedrooms: '', bathrooms: '', propertyType: '', price: '',
                 sizeMin: '', furnishing: '', 
                 status: 'approved', mainView: '', propertyLabel: '', description: '',
-                // created_at DIHAPUS
-                // Jika ada addedOn yang manual: addedOn: today,
-                price_mode: 'manual', images: [], listing_age_category: 'kurang dari 3 bulan', existingImages: []
+                price_mode: 'manual', images: [], listingAgeCategory: 'kurang dari 3 bulan', existingImages: []
             };
             const imagesUploadInput = document.getElementById('images_upload_input');
             if (imagesUploadInput) imagesUploadInput.value = ''; 
@@ -516,17 +518,11 @@ function masterProperti() {
 
         async fetchPropertyData(id) {
             this.isSubmitting = true; 
-            
             try {
-                const baseUrl = '{{ url("data-master/properti") }}';
-                const url = `${baseUrl}/${id}/edit-data`; 
-                console.log('Ambil data edit dari URL:', url);
-
+                const url = `{{ url('data-master/properti') }}/${id}/edit-data`;
                 const response = await fetch(url);
                 if (!response.ok) {
-                    let errorData;
-                    try { errorData = await response.json(); }
-                    catch (e) { errorData = { message: `Gagal mengambil data properti. Status: ${response.status} - ${response.statusText}` }; }
+                    const errorData = await response.json().catch(() => ({ message: `Gagal mengambil data. Status: ${response.status}` }));
                     throw new Error(errorData.message || `Kesalahan HTTP! status: ${response.status}`);
                 }
                 const data = await response.json(); 
@@ -535,18 +531,14 @@ function masterProperti() {
                 this.formData.address = data.address || '';
                 this.formData.bedrooms = data.bedrooms === null ? '' : data.bedrooms;
                 this.formData.bathrooms = data.bathrooms === null ? '' : data.bathrooms;
-                // this.formData.type = data.type || 'Residential for Sale';
+                this.formData.propertyType = data.propertyType || this.propertyTypeOptions[0].value; 
                 this.formData.price = data.price === null ? '' : data.price;
                 this.formData.sizeMin = data.sizeMin === null ? '' : data.sizeMin;
                 this.formData.furnishing = data.furnishing || '';
-                this.formData.status = !!data.status; 
-                this.formData.mainView = data.mainView || '';
-                this.formData.propertyLabel = data.propertyLabel || '';
+                this.formData.status = data.status === 'approved' || data.status === true; // Handle boolean dan string 'approved'
+                this.formData.mainView = data.mainView || this.viewTypeOptions[0].value;
+                this.formData.propertyLabel = data.propertyLabel || this.keywordOptions[0].value;
                 this.formData.description = data.description || '';
-                // this.formData.listing_age_category = data.listing_age_category || 'N/A';
-                // created_at DIHAPUS dari pengisian formData, karena tidak diubah oleh user
-                // Jika ada addedOn yang manual, isi di sini:
-                // this.formData.addedOn = data.addedOn ? new Date(data.addedOn).toISOString().split('T')[0] : this.getTodayDate();
                 this.formData.price_mode = 'manual'; 
 
                 let existingImagesFromServer = [];
@@ -564,25 +556,19 @@ function masterProperti() {
                 this.formData.images = []; 
             } catch (error) {
                 console.error('Error di fetchPropertyData:', error);
-                if (!this.ajaxErrors.general || !Array.isArray(this.ajaxErrors.general)) {
-                    this.ajaxErrors.general = [];
-                }
-                this.ajaxErrors.general.push(error.message || 'Tidak dapat memuat data properti.');
+                this.ajaxErrors.general = [error.message || 'Tidak dapat memuat data properti.'];
             }
             finally { this.isSubmitting = false; }
         },
 
         async getPredictedPrice() {
-            this.isPredicting = true;
-            this.predictionError = '';
-            this.ajaxErrors = {};
+            this.isPredicting = true; this.predictionError = ''; this.ajaxErrors = {};
             const requiredFieldsForApi = {
                 bathrooms: 'bathrooms', bedrooms: 'bedrooms', furnishing: 'furnishing',
                 sizeMin: 'sizeMin', verified: 'status', view_type: 'mainView', title_keyword: 'propertyLabel'
             };
             let dataForPrediction = { listing_age_category: 0 };
-            let isValid = true;
-            let missingFieldsDisplay = [];
+            let isValid = true; let missingFieldsDisplay = [];
 
             for (const apiKey in requiredFieldsForApi) {
                 const formKey = requiredFieldsForApi[apiKey];
@@ -592,21 +578,22 @@ function masterProperti() {
                     missingFieldsDisplay.push(fieldNameMap[formKey] || formKey);
                     isValid = false;
                 }
-                if (!isValid) continue;
+                if (!isValid && missingFieldsDisplay.length > 0) continue; // Cek jika sudah tidak valid dari field sebelumnya
+
                 if (['bathrooms', 'bedrooms', 'sizeMin'].includes(formKey)) {
-                    if (isNaN(parseFloat(value))) { this.predictionError = `Field '${formKey}' harus angka.`; isValid = false; break; }
+                    if (isNaN(parseFloat(value))) { this.predictionError = `Field '${(fieldNameMap[formKey] || formKey)}' harus angka.`; isValid = false; break; }
                     dataForPrediction[apiKey] = parseFloat(value);
                 } else if (formKey === 'status') {
                     dataForPrediction.verified = this.formData.status ? 1 : 0;
                 } else if (formKey === 'furnishing') {
                     dataForPrediction.furnishing = this.furnishingMapForPrediction[value];
-                    if (dataForPrediction.furnishing === undefined) { this.predictionError = "Status Perabotan tidak valid."; isValid = false; break; }
+                    if (dataForPrediction.furnishing === undefined || dataForPrediction.furnishing === null) { this.predictionError = "Status Perabotan tidak valid/belum dipilih."; isValid = false; break; }
                 } else if (formKey === 'mainView') {
                     dataForPrediction.view_type = this.viewTypeMapForPrediction[value];
-                    if (dataForPrediction.view_type === undefined) { this.predictionError = "Tipe Pemandangan tidak valid."; isValid = false; break; }
+                    if (dataForPrediction.view_type === undefined || dataForPrediction.view_type === null) { this.predictionError = "Tipe Pemandangan tidak valid/belum dipilih."; isValid = false; break; }
                 } else if (formKey === 'propertyLabel') {
                     dataForPrediction.title_keyword = this.keywordMapForPrediction[value];
-                    if (dataForPrediction.title_keyword === undefined) { this.predictionError = "Label Properti tidak valid."; isValid = false; break; }
+                    if (dataForPrediction.title_keyword === undefined || dataForPrediction.title_keyword === null) { this.predictionError = "Label Properti tidak valid/belum dipilih."; isValid = false; break; }
                 }
             }
             if (missingFieldsDisplay.length > 0) {
@@ -615,7 +602,6 @@ function masterProperti() {
             }
             if (!isValid) { this.isPredicting = false; return; }
 
-            console.log('Kirim data untuk prediksi:', JSON.stringify(dataForPrediction));
             try {
                 const response = await fetch('http://localhost:5000/prediksi/create', {
                     method: 'POST',
@@ -623,7 +609,6 @@ function masterProperti() {
                     body: JSON.stringify(dataForPrediction)
                 });
                 const result = await response.json();
-                console.log('Respons API prediksi:', result);
                 if (!response.ok) {
                     this.predictionError = result.error || result.message || `Gagal mendapatkan prediksi (Status: ${response.status})`;
                     this.formData.price = '';
@@ -632,7 +617,6 @@ function masterProperti() {
                     this.predictionError = 'Prediksi harga berhasil dimuat.';
                 }
             } catch (error) {
-                console.error('Error panggil API prediksi:', error);
                 this.predictionError = 'Gagal terhubung ke layanan prediksi. Pastikan layanan aktif, CORS dikonfigurasi, dan semua field terisi benar.';
                 this.formData.price = '';
             } finally {
@@ -641,75 +625,70 @@ function masterProperti() {
         },
 
         async submitForm() {
-            this.isSubmitting = true;
-            this.ajaxErrors = {};
-
+            this.isSubmitting = true; this.ajaxErrors = {}; this.successMessage = ''; this.deleteError = '';
             const formElement = document.getElementById('propertyForm');
             const formDataToSend = new FormData(formElement); 
 
-            formDataToSend.set('title', this.formData.title);
-            formDataToSend.set('address', this.formData.address);
-            formDataToSend.set('bedrooms', this.formData.bedrooms);
-            formDataToSend.set('bathrooms', this.formData.bathrooms);
-            formDataToSend.set('propertyType', this.formData.propertyType);
-            formDataToSend.set('price', this.formData.price);
-            formDataToSend.set('sizeMin', this.formData.sizeMin);
-            formDataToSend.set('furnishing', this.formData.furnishing);
-            formDataToSend.set('mainView', this.formData.mainView);
-            formDataToSend.set('propertyLabel', this.formData.propertyLabel);
-            formDataToSend.set('description', this.formData.description);
-            // created_at DIHAPUS dari pengiriman form
-            // Jika ada addedOn yang manual, tambahkan di sini:
-            // formDataToSend.set('addedOn', this.formData.addedOn);
-            formDataToSend.set('status', this.formData.status ? 'approved' : 'pendingVerification'); 
-            formDataToSend.delete('images[]');
-            formDataToSend.set('listing_age_category', this.formData.listing_age_category);
-
+            // Set fields manual dari Alpine formData ke FormData object
+            Object.keys(this.formData).forEach(key => {
+                if (key === 'images' || key === 'existingImages') return; // File images ditangani terpisah
+                if (key === 'status') {
+                     formDataToSend.set(key, this.formData[key] ? 'approved' : 'pendingVerification');
+                } else if (this.formData[key] !== null && this.formData[key] !== undefined) {
+                     formDataToSend.set(key, this.formData[key]);
+                }
+            });
+            
+            formDataToSend.delete('images[]'); // Hapus array kosong default dari input file
             if (this.formData.images && this.formData.images.length > 0) {
                 this.formData.images.forEach((file) => {
                     formDataToSend.append('images[]', file, file.name);
                 });
             }
             
-            console.log('Data yang akan dikirim ke server:', Object.fromEntries(formDataToSend));
-
             try {
                 const response = await fetch(this.formAction, {
                     method: 'POST', 
                     headers: {
                         'X-CSRF-TOKEN': this.csrfToken,
                         'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: formDataToSend,
                 });
-
                 const result = await response.json();
 
                 if (!response.ok) {
                     if (response.status === 422 && result.errors) {
                         this.ajaxErrors = result.errors;
-                        if (result.message) {
-                            if (!this.ajaxErrors.general || !Array.isArray(this.ajaxErrors.general)) this.ajaxErrors.general = [];
-                            this.ajaxErrors.general.push(result.message);
-                        }
+                        if (result.message && !this.ajaxErrors.general) this.ajaxErrors.general = [];
+                        if (result.message) this.ajaxErrors.general.push(result.message);
+                        
                         const firstErrorField = Object.keys(result.errors)[0];
                         if (firstErrorField) {
-                            const el = document.getElementById(firstErrorField + '_form'); 
+                            const el = document.getElementById(firstErrorField + '_form') || document.querySelector(`[name="${firstErrorField}"]`);
                             if (el) el.focus();
                         }
                     } else {
-                         if (!this.ajaxErrors.general || !Array.isArray(this.ajaxErrors.general)) this.ajaxErrors.general = [];
                         this.ajaxErrors.general = [result.message || `Terjadi error (Status: ${response.status}). Coba lagi.`];
                     }
                     return; 
                 }
+                
+                this.successMessage = result.message || (this.currentPropertyId ? 'Data properti berhasil diperbarui.' : 'Data properti berhasil ditambahkan.');
                 this.closeModal();
-                window.location.reload();
+                
+                setTimeout(() => { // Beri waktu notifikasi untuk tampil sebelum reload
+                     window.location.reload();
+                }, 1000); 
 
             } catch (error) {
                 console.error('Error submit form:', error);
-                if (!this.ajaxErrors.general || !Array.isArray(this.ajaxErrors.general)) this.ajaxErrors.general = [];
-                this.ajaxErrors.general = ['Tidak bisa terhubung ke server. Cek koneksi dan coba lagi.'];
+                 if (error instanceof SyntaxError) {
+                    this.ajaxErrors.general = ['Respons server tidak valid. Coba lagi atau kontak administrator.'];
+                } else {
+                    this.ajaxErrors.general = ['Tidak bisa terhubung ke server. Cek koneksi dan coba lagi.'];
+                }
             } finally {
                 this.isSubmitting = false;
             }
@@ -719,8 +698,7 @@ function masterProperti() {
             this.propertyToDeleteUrl = url;
             this.propertyToDeleteId = id;
             this.propertyToDeleteName = name || 'Properti Ini';
-            this.deleteError = ''; 
-            this.ajaxErrors = {}; 
+            this.deleteError = ''; this.ajaxErrors = {}; this.successMessage = '';
             this.$dispatch('open-modal', 'deleteConfirmModal');
         },
 
@@ -728,11 +706,9 @@ function masterProperti() {
             this.$dispatch('close-modal', 'deleteConfirmModal');
         },
 
-        async confirmDelete() {
+ async confirmDelete() {
             if (!this.propertyToDeleteUrl) return;
-            this.isDeleting = true;
-            this.deleteError = '';
-            this.ajaxErrors = {};
+            this.isDeleting = true; this.deleteError = ''; this.ajaxErrors = {}; this.successMessage = '';
 
             try {
                 const response = await fetch(this.propertyToDeleteUrl, {
@@ -741,27 +717,53 @@ function masterProperti() {
                         'X-CSRF-TOKEN': this.csrfToken,
                         'Accept': 'application/json',
                         'Content-Type': 'application/json', 
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
-                    body: JSON.stringify({ 
-                        _method: 'DELETE'
-                    })
+                    body: JSON.stringify({ _method: 'DELETE' })
                 });
-
                 const result = await response.json();
 
                 if (!response.ok) {
                     this.deleteError = result.message || `Gagal menghapus (Status: ${response.status})`;
-                    if (result.errors) this.ajaxErrors = result.errors;
+                    if (result.errors) this.ajaxErrors.delete = result.errors.general ? result.errors.general.join(', ') : JSON.stringify(result.errors);
+                    this.isDeleting = false; // [FIX] Pastikan isDeleting di-reset pada error juga
                     return;
                 }
+                
+                // [MODIFIED] Tampilkan pesan sukses, lalu reload halaman
+                this.successMessage = result.message || 'Data properti berhasil dihapus.';
                 this.closeDeleteModal();
-                window.location.reload();
+
+                // Hapus baris dari tabel secara dinamis (opsional, karena halaman akan di-reload)
+                // Jika Anda ingin efek baris hilang sebelum reload:
+                const rowToRemove = document.querySelector(`tr[\\:key="'prop-${this.propertyToDeleteId}'"]`);
+                if (rowToRemove) {
+                    rowToRemove.style.opacity = '0';
+                    rowToRemove.style.transition = 'opacity 0.5s ease-out';
+                }
+
+                // Reload halaman setelah jeda singkat agar notifikasi sukses sempat terbaca
+                // dan efek transisi (jika ada) selesai
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000); // Jeda 1 detik (atau sesuaikan)
 
             } catch (error) {
                 console.error('Error hapus properti:', error);
-                this.deleteError = 'Tidak bisa terhubung ke server untuk menghapus data.';
+                if (error instanceof SyntaxError) {
+                     this.deleteError = 'Respons server tidak valid saat menghapus. Coba lagi atau kontak administrator.';
+                } else {
+                     this.deleteError = 'Tidak bisa terhubung ke server untuk menghapus data.';
+                }
             } finally {
-                this.isDeleting = false;
+                // isDeleting akan di-reset di akhir timeout reload, atau di sini jika tidak ada reload
+                // Jika setTimeout untuk reload aktif, isDeleting bisa direset di sana atau dibiarkan
+                // karena halaman akan di-reload. Namun, jika timeout tidak ada, reset di sini penting.
+                 if (!document.querySelector(`tr[\\:key="'prop-${this.propertyToDeleteId}'"]`)) { // jika sudah diremove
+                    this.isDeleting = false;
+                 }
+                 // Reset ID hanya setelah operasi selesai atau jika error
+                 this.propertyToDeleteId = null;
             }
         }
     }
@@ -769,7 +771,7 @@ function masterProperti() {
 
 if (typeof window.handleImageError === 'undefined') {
     window.handleImageError = function(imgElement) {
-        console.warn('Error loading image, using placeholder for:', imgElement.src);
+        // console.warn('Error loading image, using placeholder for:', imgElement.src);
         const placeholder = "{{ asset('images/placeholder.png') }}"; 
         if (imgElement.src !== placeholder) { 
             imgElement.src = placeholder;
