@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\APIAuthController;
 use App\Http\Controllers\PredictionController;
 use App\Http\Controllers\APIPropertyController;
+use App\Http\Controllers\ApiForgotPasswordController;
 // use App\Http\Controllers\APIImageController; // Hilangkan jika tidak dipakai
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
@@ -43,6 +44,13 @@ Route::middleware('auth:api')->group(function () {
 
     Route::post('/predict-price', [PredictionController::class, 'predictPrice']);
 });
+
+Route::post('/forgot-password', [ApiForgotPasswordController::class, 'sendResetCodeEmail']);
+// 2. Memverifikasi kode yang dimasukkan pengguna di aplikasi
+Route::post('/verify-password-code', [ApiForgotPasswordController::class, 'verifyCode']);
+// 3. Mereset password setelah kode diverifikasi
+Route::post('/reset-password-with-code', [ApiForgotPasswordController::class, 'resetPasswordWithCode']);
+
 
 Route::post('/refresh', [APIAuthController::class, 'refresh']);
 
