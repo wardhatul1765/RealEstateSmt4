@@ -366,11 +366,13 @@ class APIPropertyController extends Controller
 public function showPublicProperty(Request $request, $id)
     {
         Log::info("APIPropertyController: showPublicProperty dipanggil untuk ID: " . $id);
-        $property = UserProperty::find($id);
+
+        // MODIFIKASI DI SINI: Tambahkan with('owner') untuk eager loading
+        $property = UserProperty::with('owner')->find($id);
 
         if (!$property || $property->status !== 'approved') {
             Log::warning("APIPropertyController: Properti {$id} tidak ditemukan atau status bukan approved.");
-            return response()->json(['success' => false, 'message' => 'Property not found or not available.'], 404);
+            return response()->json(['success' => false, 'message' => 'Properti tidak ditemukan atau tidak tersedia.'], 404);
         }
 
         try {
@@ -384,29 +386,26 @@ public function showPublicProperty(Request $request, $id)
             ]);
             Log::info("APIPropertyController: Entri PropertyView BERHASIL dicatat untuk properti {$id}.");
 
-            // Ambil nilai views saat ini, default ke 0 jika belum ada/null
             $currentViews = $property->total_views_count ?? 0;
             Log::info("APIPropertyController: total_views_count SEBELUM increment: " . $currentViews . " untuk properti {$id}.");
 
             $property->total_views_count = $currentViews + 1;
-            $property->save(); // Simpan perubahan ke database
-
-            // PENTING: Muat ulang model dari database untuk memastikan semua atribut (termasuk yang baru diupdate) segar
-            $property->refresh(); 
+            $property->save();
+            $property->refresh();
 
             Log::info("APIPropertyController: total_views_count SETELAH refresh: " . $property->total_views_count . " untuk properti {$id}.");
 
         } catch (\Exception $e) {
             Log::error("APIPropertyController: GAGAL mencatat view atau increment untuk properti {$id}: " . $e->getMessage(), ['exception' => $e]);
         }
-        
-        // Log data yang AKAN dikirim ke Flutter
+
         Log::info("APIPropertyController: Data properti yang akan dikirim ke Flutter: ", $property->toArray());
 
+        // $property yang dikirim sekarang akan menyertakan objek 'owner' di dalamnya
         return response()->json([
             'success' => true,
-            'message' => 'Property details fetched successfully.',
-            'data' => $property, // $property di sini seharusnya sudah memiliki total_views_count yang benar
+            'message' => 'Detail properti berhasil diambil.',
+            'data' => $property,
         ]);
     }
 
