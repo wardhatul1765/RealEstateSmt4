@@ -6,7 +6,7 @@ use App\Models\UserProperty;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
-use MongoDB\BSON\UTCDateTime as MongoUTCDateTime;
+use MongoDB\BSON\UTCDateTime as MongoUTCDateTime; // Pastikan alias ini digunakan
 
 class DashboardController extends Controller
 {
@@ -23,12 +23,12 @@ class DashboardController extends Controller
 
             // Distribusi harga
             $priceDistributionRaw = UserProperty::select('price')->whereNotNull('price')->get();
-            $priceDistribution = [];
+            $priceDistributionData = [];
             foreach ($priceDistributionRaw as $item) {
                 $range = floor($item->price / 1000000) * 1000000;
-                $priceDistribution[$range] = ($priceDistribution[$range] ?? 0) + 1;
+                $priceDistributionData[$range] = ($priceDistributionData[$range] ?? 0) + 1;
             }
-            ksort($priceDistribution);
+            ksort($priceDistributionData);
 
             // Distribusi furnishing
             $furnishingDistributionRaw = UserProperty::raw(function ($collection) {
@@ -60,31 +60,38 @@ class DashboardController extends Controller
                 ->values()
                 ->toArray();
 
-            // --- Filter hanya data tahun 2024 ---
-            $properties2024 = UserProperty::whereNotNull('created_at')
-                ->whereBetween('created_at', [
-                    Carbon::create(2024, 1, 1),
-                    Carbon::create(2024, 12, 31, 23, 59, 59)
-                ])
+            $startDate = Carbon::create(2024, 1, 1)->startOfDay();
+            $endDate = Carbon::now()->endOfDay();
+
+            $propertiesFrom2024ToCurrent = UserProperty::whereNotNull('created_at')
+                ->whereBetween('created_at', [$startDate, $endDate])
                 ->get();
 
             // Properti ditambahkan per bulan (diurutkan)
-            $addedPropertiesGrouped = $properties2024->groupBy(function ($item) {
-                return Carbon::parse($item->created_at)->format('Y-m');
+            $addedPropertiesGrouped = $propertiesFrom2024ToCurrent->groupBy(function ($item) {
+                // Gunakan alias MongoUTCDateTime yang sudah diimpor
+                $createdAt = $item->created_at instanceof MongoUTCDateTime
+                    ? Carbon::instance($item->created_at->toDateTime())
+                    : Carbon::parse($item->created_at);
+                return $createdAt->format('Y-m');
             })->sortKeys();
 
-            $addedProperties = ['labels' => [], 'data' => []];
+            $addedPropertiesPerMonth = ['labels' => [], 'data' => []];
             foreach ($addedPropertiesGrouped as $month => $items) {
                 $monthName = Carbon::parse($month . '-01')->format('M Y');
-                $addedProperties['labels'][] = $monthName;
-                $addedProperties['data'][] = count($items);
+                $addedPropertiesPerMonth['labels'][] = $monthName;
+                $addedPropertiesPerMonth['data'][] = count($items);
             }
 
             // Harga rata-rata properti per bulan (diurutkan)
-            $avgPriceGrouped = $properties2024
+            $avgPriceGrouped = $propertiesFrom2024ToCurrent
                 ->filter(fn($item) => $item->price > 0)
                 ->groupBy(function ($item) {
-                    return Carbon::parse($item->created_at)->format('Y-m');
+                    // Gunakan alias MongoUTCDateTime yang sudah diimpor
+                    $createdAt = $item->created_at instanceof MongoUTCDateTime
+                        ? Carbon::instance($item->created_at->toDateTime())
+                        : Carbon::parse($item->created_at);
+                    return $createdAt->format('Y-m');
                 })->sortKeys();
 
             $averagePricePerMonth = ['labels' => [], 'data' => []];
@@ -94,24 +101,23 @@ class DashboardController extends Controller
                 $averagePricePerMonth['data'][] = round($items->avg('price'), 0);
             }
 
-            // Return ke view
             return view('dashboard', [
                 'totalProperties' => UserProperty::count(),
                 'averagePrice' => $averagePrice,
                 'averagePriceFormatted' => $averagePriceFormatted,
                 'averageSize' => round($averageSizeSqft, 2),
-                'propertiBelumTerverifikasi' => UserProperty::where('isVerified', false)->count(),
+                'propertiBelumTerverifikasi' => UserProperty::where('status', 'pendingVerification')->count(),
                 'priceDistribution' => [
-                    'labels' => array_map(fn($range) => 'AED ' . number_format($range / 1000000, 0) . 'M', array_keys($priceDistribution)),
-                    'data' => array_values($priceDistribution)
+                    'labels' => array_map(fn($range) => 'AED ' . number_format($range / 1000000, 0) . 'M', array_keys($priceDistributionData)),
+                    'data' => array_values($priceDistributionData)
                 ],
                 'furnishingDistribution' => $furnishingDistribution,
                 'sizePriceData' => $sizePriceData,
-                'addedPropertiesPerMonth' => $addedProperties,
+                'addedPropertiesPerMonth' => $addedPropertiesPerMonth,
                 'averagePricePerMonth' => $averagePricePerMonth,
             ]);
         } catch (\Exception $e) {
-            Log::error("Dashboard Error: " . $e->getMessage());
+            Log::error("Dashboard Error: " . $e->getMessage() . "\nStack Trace:\n" . $e->getTraceAsString());
             return view('error.dashboard')->with('error', 'Terjadi kesalahan saat mengambil data dashboard.');
         }
     }

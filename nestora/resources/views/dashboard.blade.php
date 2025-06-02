@@ -28,28 +28,28 @@
         </div>
 
         {{-- Second Row Charts --}}
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {{-- Scatter Plot --}}
-            <div class="bg-white rounded-lg shadow p-4">
+        {{-- <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            Scatter Plot --}}
+            {{-- <div class="bg-white rounded-lg shadow p-4">
                 <h3 class="text-lg font-semibold mb-3">Hubungan Luas vs Harga</h3>
                 <div class="h-48">
                     <canvas id="sizePriceChart"></canvas>
                 </div>
-            </div>
+            </div> --}}
 
             {{-- Tren Penambahan --}}
-            <div class="bg-white rounded-lg shadow p-4">
+            <div class="bg-white rounded-lg shadow p-4"> {{-- Asumsi ini adalah bagian dari grid yang berbeda atau seharusnya full-width jika sendirian --}}
                 <h3 class="text-lg font-semibold mb-3">Tren Penambahan Properti</h3>
                 <div class="h-48">
                     <canvas id="addedPropertiesChart"></canvas>
                 </div>
             </div>
-        </div>
+        {{-- </div> --}} {{-- Penutup div grid yang mungkin terlewat atau sengaja di-comment --}}
 
         {{-- Third Row - Full Width Chart --}}
         <div class="bg-white rounded-lg shadow p-4">
             <h3 class="text-lg font-semibold mb-3">Rata-rata Harga Per Bulan</h3>
-            <div class="h-64">
+            <div class="h-48"> {{-- DIUBAH DARI h-64 MENJADI h-48 --}}
                 <canvas id="averagePriceChart"></canvas>
             </div>
         </div>
@@ -57,11 +57,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Konfigurasi default untuk semua chart
     Chart.defaults.responsive = true;
     Chart.defaults.maintainAspectRatio = false;
 
-    // Price Distribution Chart
     const priceCtx = document.getElementById('priceDistributionChart').getContext('2d');
     new Chart(priceCtx, {
         type: 'bar',
@@ -100,7 +98,6 @@
         }
     });
 
-    // Furnishing Distribution Chart
     const furnishingCtx = document.getElementById('furnishingDistributionChart').getContext('2d');
     new Chart(furnishingCtx, {
         type: 'pie',
@@ -110,7 +107,7 @@
                 data: {!! json_encode($furnishingDistribution['data']) !!},
                 backgroundColor: [
                     '#FF6384',
-                    '#36A2EB', 
+                    '#36A2EB',
                     '#FFCE56',
                     '#4BC0C0',
                     '#9966FF',
@@ -133,49 +130,6 @@
         }
     });
 
-    // Size vs Price Scatter Chart
-    const sizePriceCtx = document.getElementById('sizePriceChart').getContext('2d');
-    new Chart(sizePriceCtx, {
-        type: 'scatter',
-        data: {
-            datasets: [{
-                label: 'Luas vs Harga',
-                data: {!! json_encode($sizePriceData) !!},
-                backgroundColor: 'rgba(16, 185, 129, 0.6)',
-                borderColor: 'rgba(16, 185, 129, 1)',
-                pointRadius: 4,
-                pointHoverRadius: 6,
-            }]
-        },
-        options: {
-            plugins: {
-                legend: {
-                    display: true
-                }
-            },
-            scales: {
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Harga (AED)'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return 'AED ' + (value / 1000000).toFixed(0) + 'M';
-                        }
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Luas (sqft)'
-                    }
-                }
-            }
-        }
-    });
-
-    // Added Properties Chart
     const addedCtx = document.getElementById('addedPropertiesChart').getContext('2d');
     new Chart(addedCtx, {
         type: 'bar',
@@ -213,7 +167,6 @@
         }
     });
 
-    // Average Price Per Month Chart
     const averagePriceCtx = document.getElementById('averagePriceChart').getContext('2d');
     new Chart(averagePriceCtx, {
         type: 'line',
