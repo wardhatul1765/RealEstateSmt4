@@ -14,7 +14,7 @@ use MongoDB\BSON\UTCDateTime;
 class APIPropertyController extends Controller
 {
     public function __construct() {
-        $this->middleware('auth:api')->except(['getPublicProperties', 'showPublicProperty', 'recordView']); // showPublicProperty & recordView bisa diakses publik
+        $this->middleware('auth:api')->except(['getPublicProperties', 'showPublicProperty', 'recordView']);
     }
 
     public function index(Request $request)
@@ -173,10 +173,6 @@ class APIPropertyController extends Controller
         }
         
         $inputForValidation = $request->input(); 
-        if (empty($inputForValidation) && $request->isMethod('PUT')) { // Anda menggunakan POST untuk update dari Flutter, jadi ini mungkin tidak ter-trigger
-             Log::warning("Property Update ID {$id} - request->input() is empty for PUT/POST. Trying request->except(files).");
-             $inputForValidation = $request->except(array_keys($request->allFiles()));
-        }
         Log::info("Property Update ID {$id} - Input being used for Validation:", $inputForValidation);
 
         $validator = Validator::make($inputForValidation, [
@@ -199,16 +195,14 @@ class APIPropertyController extends Controller
         if ($validator->fails()) {
             Log::error("Property Update ID {$id} - VALIDATION FAILED. Errors:", $validator->errors()->toArray());
             return response()->json(['errors' => $validator->errors()], 422);
-        } else {
-            Log::info("Property Update ID {$id} - VALIDATION PASSED.");
         }
+        Log::info("Property Update ID {$id} - VALIDATION PASSED.");
+        
 
         $validated = $validator->validated();
         Log::info("Property Update ID {$id} - Validated Data (after successful validation):", $validated);
 
         $currentImageValueFromDB = $property->image;
-        Log::info("Property Update ID {$id} - Raw 'image' field from DB (type: " . gettype($currentImageValueFromDB) . "): ", [$currentImageValueFromDB]);
-
         $currentImageNames = [];
         if (is_string($currentImageValueFromDB)) {
             $decodedImages = json_decode($currentImageValueFromDB, true);
@@ -218,12 +212,9 @@ class APIPropertyController extends Controller
         } elseif (is_array($currentImageValueFromDB)) {
             $currentImageNames = $currentImageValueFromDB;
         }
-        Log::info("Property Update ID {$id} - Effective Current Image Names from DB (guaranteed array):", $currentImageNames);
         
         $retainedImageNames = [];
         $retainedImageUrlsJson = $request->input('retainedImageUrls');
-        Log::info("Property Update ID {$id} - Received retainedImageUrls (raw string from request->input()):", [$retainedImageUrlsJson]);
-
         if (!empty($retainedImageUrlsJson)) {
             $decodedRetainedUrls = json_decode($retainedImageUrlsJson, true);
             if (is_array($decodedRetainedUrls)) {
@@ -237,7 +228,6 @@ class APIPropertyController extends Controller
                 }
             }
         }
-        Log::info("Property Update ID {$id} - Final Retained Image Names (after processing retainedImageUrls):", $retainedImageNames);
         
         foreach ($currentImageNames as $existingFilename) {
             if (is_string($existingFilename) && !empty(trim($existingFilename))) {
@@ -261,18 +251,13 @@ class APIPropertyController extends Controller
                 $filename = uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs('public/properties', $filename);
                 if ($path) {
-                    Log::info("New file {$filename} successfully stored at {$path} for update.");
                     $newUploadedImageNames[] = $filename;
-                } else {
-                    Log::error("Failed to store new file: " . $file->getClientOriginalName() . " for update.");
                 }
             }
         }
-        Log::info("Property Update ID {$id} - New Uploaded Image Names:", $newUploadedImageNames);
         
         $finalImageNames = array_values(array_unique(array_merge($retainedImageNames, $newUploadedImageNames)));
-        Log::info("Property Update ID {$id} - Final Image Names to be saved in DB:", $finalImageNames);
-
+        
         try {
             $updateData = [];
             if (!empty($validated)) {
@@ -284,14 +269,9 @@ class APIPropertyController extends Controller
             }
             $updateData['image'] = $finalImageNames;
             
-            Log::info("Property Update ID {$id} - Complete Data for DB Update (before fill):", $updateData);
-            
             if (!empty($updateData)) {
                 $property->fill($updateData);
                 $property->save();
-                Log::info("Property ID {$id} updated successfully in DB.");
-            } else {
-                Log::info("Property Update ID {$id} - No data to update after processing. Property not saved.");
             }
 
             return response()->json([
@@ -313,40 +293,90 @@ class APIPropertyController extends Controller
     {
         try {
             $statusToQuery = 'approved';
-            
-            // Mulai query dengan model UserProperty dan filter status awal
             $query = UserProperty::where('status', $statusToQuery);
 
-            // +++ AWAL LOGIKA KEYWORD SEARCH +++
-            if ($request->has('keyword') && !empty($request->keyword)) {
+            // Keyword Search
+            if ($request->filled('keyword')) {
                 $keyword = $request->keyword;
-                Log::info("APIPropertyController: Mencari properti publik dengan status: '$statusToQuery' DAN keyword: '$keyword'");
-
+                Log::info("APIPropertyController: Mencari dengan keyword: '$keyword'");
                 $query->where(function ($q) use ($keyword) {
                     $q->where('title', 'LIKE', "%{$keyword}%")
                       ->orWhere('address', 'LIKE', "%{$keyword}%")
                       ->orWhere('description', 'LIKE', "%{$keyword}%")
                       ->orWhere('propertyType', 'LIKE', "%{$keyword}%");
                 });
-            } else {
-                Log::info("APIPropertyController: Mencari properti publik dengan status: '$statusToQuery' (tanpa keyword).");
-            }
-            // +++ AKHIR LOGIKA KEYWORD SEARCH +++
-
-            $properties = $query->orderBy('updated_at', 'desc')
-                                ->paginate(10);
-
-            if ($properties->isEmpty()) {
-                Log::info("APIPropertyController: Tidak ada properti publik ditemukan dengan kriteria yang diberikan.");
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Tidak ada properti yang tersedia saat ini sesuai pencarian Anda.',
-                    'data' => $properties // Mengembalikan objek paginasi kosong, bukan array kosong langsung
-                                         // Ini agar Flutter bisa tetap memproses struktur paginasi
-                ], 200);
             }
 
-            Log::info("APIPropertyController: Properti publik ditemukan (" . $properties->total() . " total items, " . $properties->count() . " items di halaman ini). Mengirim respons.");
+            // Default Sorting
+            $defaultSortField = 'updated_at';
+            $defaultSortDirection = 'desc';
+
+            // Category Filter
+            if ($request->filled('category')) {
+                $category = $request->category;
+                Log::info("APIPropertyController: Menerima parameter kategori: '$category'");
+                if ($category === "Most Viewed") {
+                    $defaultSortField = 'total_views_count';
+                    $defaultSortDirection = 'desc';
+                }
+            }
+
+            // --- Advanced Filters ---
+            if ($request->filled('propertyType')) {
+                $query->where('propertyType', $request->propertyType);
+            }
+
+            // Lokasi (LIKE address)
+            if ($request->filled('lokasi')) {
+                $query->where('address', 'LIKE', '%' . $request->lokasi . '%');
+            }
+
+            if ($request->filled('minPrice') && is_numeric($request->minPrice)) {
+                $query->where('price', '>=', (float)$request->minPrice);
+            }
+            if ($request->filled('maxPrice') && is_numeric($request->maxPrice)) {
+                $query->where('price', '<=', (float)$request->maxPrice);
+            }
+
+            if ($request->filled('minBedrooms') && is_numeric($request->minBedrooms)) {
+                $query->where('bedrooms', '>=', (int)$request->minBedrooms);
+            }
+            if ($request->filled('maxBedrooms') && is_numeric($request->maxBedrooms)) {
+                $query->where('bedrooms', '<=', (int)$request->maxBedrooms);
+            }
+
+            if ($request->filled('minBathrooms') && is_numeric($request->minBathrooms)) {
+                $query->where('bathrooms', '>=', (int)$request->minBathrooms);
+            }
+            if ($request->filled('maxBathrooms') && is_numeric($request->maxBathrooms)) {
+                $query->where('bathrooms', '<=', (int)$request->maxBathrooms);
+            }
+            
+            if ($request->filled('furnishing')) {
+                $query->where('furnishing', $request->furnishing);
+            }
+
+            if ($request->filled('minArea') && is_numeric($request->minArea)) {
+                $query->where('sizeMin', '>=', (float)$request->minArea);
+            }
+
+            // Filter baru
+            if ($request->filled('mainView')) {
+                $query->where('mainView', $request->mainView);
+            }
+            if ($request->filled('listingAgeCategory')) {
+                $query->where('listingAgeCategory', $request->listingAgeCategory);
+            }
+            if ($request->filled('propertyLabel')) {
+                $query->where('propertyLabel', $request->propertyLabel);
+            }
+            // --- End Advanced Filters ---
+
+            $properties = $query->orderBy($defaultSortField, $defaultSortDirection)
+                                ->paginate($request->input('limit', 10));
+
+            Log::info("APIPropertyController: Query executed for getPublicProperties. Found " . $properties->total() . " items matching criteria with filters: ", $request->all());
+
             return response()->json([
                 'success' => true,
                 'message' => 'Properti publik berhasil diambil.',
@@ -354,20 +384,18 @@ class APIPropertyController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            Log::error('APIPropertyController Error fetching public properties: ' . $e->getMessage());
+            Log::error('APIPropertyController Error fetching public properties: ' . $e->getMessage(), ['trace' => $e->getTraceAsString(), 'request_params' => $request->all()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengambil data properti publik.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
 
-public function showPublicProperty(Request $request, $id)
+    public function showPublicProperty(Request $request, $id)
     {
         Log::info("APIPropertyController: showPublicProperty dipanggil untuk ID: " . $id);
-
-        // MODIFIKASI DI SINI: Tambahkan with('owner') untuk eager loading
         $property = UserProperty::with('owner')->find($id);
 
         if (!$property || $property->status !== 'approved') {
@@ -376,7 +404,6 @@ public function showPublicProperty(Request $request, $id)
         }
 
         try {
-            Log::info("APIPropertyController: Mencoba mencatat view untuk properti {$id}. Pengguna: " . (auth('api')->check() ? auth('api')->id() : 'Anonim') . ", IP: " . $request->ip());
             PropertyView::create([
                 'property_id' => $property->_id,
                 'user_id' => auth('api')->check() ? auth('api')->id() : null,
@@ -384,24 +411,16 @@ public function showPublicProperty(Request $request, $id)
                 'user_agent' => $request->header('User-Agent'),
                 'viewed_at' => now(),
             ]);
-            Log::info("APIPropertyController: Entri PropertyView BERHASIL dicatat untuk properti {$id}.");
-
+            
             $currentViews = $property->total_views_count ?? 0;
-            Log::info("APIPropertyController: total_views_count SEBELUM increment: " . $currentViews . " untuk properti {$id}.");
-
             $property->total_views_count = $currentViews + 1;
             $property->save();
             $property->refresh();
-
-            Log::info("APIPropertyController: total_views_count SETELAH refresh: " . $property->total_views_count . " untuk properti {$id}.");
 
         } catch (\Exception $e) {
             Log::error("APIPropertyController: GAGAL mencatat view atau increment untuk properti {$id}: " . $e->getMessage(), ['exception' => $e]);
         }
 
-        Log::info("APIPropertyController: Data properti yang akan dikirim ke Flutter: ", $property->toArray());
-
-        // $property yang dikirim sekarang akan menyertakan objek 'owner' di dalamnya
         return response()->json([
             'success' => true,
             'message' => 'Detail properti berhasil diambil.',
@@ -411,27 +430,21 @@ public function showPublicProperty(Request $request, $id)
 
     public function getPropertyViewStatistics(Request $request, $id)
     {
-        Log::info("APIPropertyController: getPropertyViewStatistics dipanggil untuk ID properti (dari route): " . $id . " (tipe: " . gettype($id) . ")");
+        Log::info("APIPropertyController: getPropertyViewStatistics dipanggil untuk ID properti (dari route): " . $id);
         $property = UserProperty::find($id);
         if (!$property) {
-            Log::warning("APIPropertyController: Properti {$id} tidak ditemukan untuk statistik.");
             return response()->json(['success' => false, 'message' => 'Property not found'], 404);
         }
 
         $property_id_to_match = $property->_id; 
-        Log::info("APIPropertyController (Stats): ID Properti yang akan dicocokkan di property_views: " . $property_id_to_match . " (tipe: " . gettype($property_id_to_match) . ")");
-
         $user = auth('api')->user();
         if (!$user || $property->user_id !== $user->id) {
-            Log::warning("APIPropertyController: Pengguna ".($user ? $user->id : 'NULL')." tidak diotorisasi untuk statistik properti {$property_id_to_match}.");
             return response()->json(['success' => false, 'message' => 'Unauthorized to view statistics for this property'], 403);
         }
 
         $dailyStats = [];
         $endDateDaily = new UTCDateTime(Carbon::now('UTC')->endOfDay()->getTimestamp() * 1000);
         $startDateDaily = new UTCDateTime(Carbon::now('UTC')->subDays(29)->startOfDay()->getTimestamp() * 1000);
-
-        Log::info("MongoDB Daily Range (UTCDateTime):", ['$gte' => $startDateDaily, '$lte' => $endDateDaily]);
 
         $dailyRawCursor = PropertyView::raw(function($collection) use ($property_id_to_match, $startDateDaily, $endDateDaily) {
             return $collection->aggregate([
@@ -440,10 +453,8 @@ public function showPublicProperty(Request $request, $id)
                 ['$sort' => ['_id' => 1]]
             ]);
         });
-
         $dailyRawArray = iterator_to_array($dailyRawCursor);
-        Log::info("Raw Daily Data (setelah agregasi dengan MongoDB dan iterator_to_array):", $dailyRawArray);
-
+        
         $currentDateLoop = Carbon::now('UTC')->subDays(29)->startOfDay();
         $endDateLoop = Carbon::now('UTC')->endOfDay();
         while ($currentDateLoop->lte($endDateLoop)) {
@@ -451,28 +462,11 @@ public function showPublicProperty(Request $request, $id)
             $currentDateLoop->addDay();
         }
         
-        // Robust extraction for daily stats
         foreach ($dailyRawArray as $item) {
-            $dateKey = null;
-            $countVal = null;
-            if (isset($item['App\\Models\\PropertyView']) && is_array($item['App\\Models\\PropertyView'])) {
-                $nestedData = $item['App\\Models\\PropertyView'];
-                if (isset($nestedData['id']) && is_string($nestedData['id']) && isset($nestedData['count'])) {
-                    $dateKey = $nestedData['id'];
-                    $countVal = $nestedData['count'];
-                }
-            } elseif (isset($item['_id']) && is_string($item['_id']) && isset($item['count'])) {
-                $dateKey = $item['_id'];
-                $countVal = $item['count'];
-            }
-            if ($dateKey !== null && $countVal !== null) {
-                if (array_key_exists($dateKey, $dailyStats)) {
-                    $dailyStats[$dateKey] = $countVal;
-                } else {
-                    Log::warning("DEBUG Daily: Kunci tanggal '$dateKey' dari agregasi tidak ditemukan di dailyStats yang diinisialisasi.");
-                }
-            } else {
-                Log::warning("DEBUG Daily: Tidak bisa mengekstrak '_id' (sebagai dateKey) dan 'count' dari item agregasi harian.", (array)$item);
+            $dateKey = $item['_id'] ?? ($item['App\\Models\\PropertyView']['id'] ?? null);
+            $countVal = $item['count'] ?? ($item['App\\Models\\PropertyView']['count'] ?? null);
+            if ($dateKey !== null && $countVal !== null && array_key_exists($dateKey, $dailyStats)) {
+                $dailyStats[$dateKey] = $countVal;
             }
         }
 
@@ -480,8 +474,6 @@ public function showPublicProperty(Request $request, $id)
         $endDateMonthly = new UTCDateTime(Carbon::now('UTC')->endOfMonth()->getTimestamp() * 1000);
         $startDateMonthly = new UTCDateTime(Carbon::now('UTC')->subMonths(11)->startOfMonth()->getTimestamp() * 1000);
         
-        Log::info("MongoDB Monthly Range (UTCDateTime):", ['$gte' => $startDateMonthly, '$lte' => $endDateMonthly]);
-
         $monthlyRawCursor = PropertyView::raw(function($collection) use ($property_id_to_match, $startDateMonthly, $endDateMonthly) {
             return $collection->aggregate([
                 ['$match' => ['property_id' => $property_id_to_match, 'viewed_at' => ['$gte' => $startDateMonthly, '$lte' => $endDateMonthly]]],
@@ -489,9 +481,7 @@ public function showPublicProperty(Request $request, $id)
                 ['$sort' => ['_id' => 1]]
             ]);
         });
-        
         $monthlyRawArray = iterator_to_array($monthlyRawCursor);
-        Log::info("Raw Monthly Data (setelah agregasi dengan MongoDB dan iterator_to_array):", $monthlyRawArray);
         
         $currentMonthLoop = Carbon::now('UTC')->subMonths(11)->startOfMonth();
         $endMonthLoop = Carbon::now('UTC')->endOfMonth();
@@ -499,40 +489,16 @@ public function showPublicProperty(Request $request, $id)
             $monthlyStats[$currentMonthLoop->format('Y-m')] = 0;
             $currentMonthLoop->addMonth();
         }
-        // Robust extraction for monthly stats
+
         foreach ($monthlyRawArray as $item) {
-            $dateKey = null;
-            $countVal = null;
-            if (isset($item['App\\Models\\PropertyView']) && is_array($item['App\\Models\\PropertyView'])) {
-                $nestedData = $item['App\\Models\\PropertyView'];
-                if (isset($nestedData['id']) && is_string($nestedData['id']) && isset($nestedData['count'])) {
-                    $dateKey = $nestedData['id'];
-                    $countVal = $nestedData['count'];
-                }
-            } elseif (isset($item['attributes']) && is_array($item['attributes'])) {
-                $nestedData = $item['attributes'];
-                if (isset($nestedData['id']) && is_string($nestedData['id']) && isset($nestedData['count'])) {
-                    $dateKey = $nestedData['id'];
-                    $countVal = $nestedData['count'];
-                }
-            } elseif (isset($item['_id']) && is_string($item['_id']) && isset($item['count'])) {
-                $dateKey = $item['_id'];
-                $countVal = $item['count'];
-            }
-            if ($dateKey !== null && $countVal !== null) {
-                if (array_key_exists($dateKey, $monthlyStats)) {
-                    $monthlyStats[$dateKey] = $countVal;
-                } else {
-                    Log::warning("DEBUG Monthly: Kunci tanggal '$dateKey' dari agregasi tidak ditemukan di monthlyStats yang diinisialisasi.");
-                }
-            } else {
-                Log::warning("DEBUG Monthly: Tidak bisa mengekstrak '_id' (sebagai dateKey) dan 'count' dari item agregasi bulanan.", (array)$item);
+            $dateKey = $item['_id'] ?? ($item['App\\Models\\PropertyView']['id'] ?? null);
+            $countVal = $item['count'] ?? ($item['App\\Models\\PropertyView']['count'] ?? null);
+
+            if ($dateKey !== null && $countVal !== null && array_key_exists($dateKey, $monthlyStats)) {
+                 $monthlyStats[$dateKey] = $countVal;
             }
         }
         
-        Log::info("APIPropertyController (Stats): Final Daily Stats for {$property_id_to_match}:", $dailyStats);
-        Log::info("APIPropertyController (Stats): Final Monthly Stats for {$property_id_to_match}:", $monthlyStats);
-
         return response()->json([
             'success' => true,
             'message' => 'Property view statistics fetched successfully.',
@@ -542,4 +508,50 @@ public function showPublicProperty(Request $request, $id)
             ]
         ]);
     }    
+
+    public function destroy(Request $request, $id)
+    {
+        Log::info("Request to delete property ID {$id} received.");
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized: No user found'], 401);
+        }
+
+        $property = UserProperty::where('_id', $id)->where('user_id', $user->id)->first();
+        if (!$property) {
+            return response()->json(['success' => false, 'message' => 'Property not found or you are not authorized to delete this property.'], 404);
+        }
+
+        try {
+            $imageFilenamesData = $property->image;
+            $imageFilenamesToDelete = [];
+
+            if (is_string($imageFilenamesData)) {
+                $decoded = json_decode($imageFilenamesData, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $imageFilenamesToDelete = $decoded;
+                } elseif (!empty($imageFilenamesData)) {
+                    $imageFilenamesToDelete = [$imageFilenamesData];
+                }
+            } elseif (is_array($imageFilenamesData)) {
+                $imageFilenamesToDelete = $imageFilenamesData;
+            }
+
+            if (!empty($imageFilenamesToDelete)) {
+                foreach ($imageFilenamesToDelete as $filename) {
+                    if (is_string($filename) && !empty(trim($filename))) {
+                        $filePath = 'public/properties/' . trim($filename);
+                        if (Storage::exists($filePath)) {
+                            Storage::delete($filePath);
+                        }
+                    }
+                }
+            }
+            $property->delete();
+            return response()->json(['success' => true, 'message' => 'Property deleted successfully.'], 200);
+        } catch (\Exception $e) {
+            Log::error("Error deleting property ID {$id}", ['error_message' => $e->getMessage(), 'error_trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'message' => "Failed to delete property ID {$id}. Please check server logs."], 500);
+        }
+    }
 }

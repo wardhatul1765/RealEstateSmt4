@@ -17,8 +17,10 @@ class ManajemenPropertiController extends Controller
         $searchTerm = $request->input('search');
 
         // Memulai query
-       $query = UserProperty::where('status', '!=', 'rejected')
-        ->where('status', '!=', false);
+        $query = UserProperty::where(function ($query) {
+            $query->whereNotIn('status', ['rejected', 'sold', 'archived', 'draft'])
+                ->where('status', '!=', false);
+        });
 
         // Jika ada input pencarian, tambahkan kondisi where
         if ($searchTerm) {

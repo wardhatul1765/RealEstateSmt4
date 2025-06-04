@@ -43,6 +43,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/properties/{id}/statistics', [APIPropertyController::class, 'getPropertyViewStatistics']);
 
     Route::post('/predict-price', [PredictionController::class, 'predictPrice']);
+    // +++ TAMBAHKAN ROUTE BARU INI UNTUK DELETE +++
+    Route::delete('/properties/{id}', [APIPropertyController::class, 'destroy']);
 });
 
 Route::post('/forgot-password', [ApiForgotPasswordController::class, 'sendResetCodeEmail']);
