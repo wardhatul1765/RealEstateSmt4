@@ -4,7 +4,7 @@ namespace App\Models;
 
 use MongoDB\Laravel\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Log; // Untuk debugging jika perlu
 
 class UserProperty extends Model
 {
@@ -31,10 +31,10 @@ class UserProperty extends Model
         'listingAgeCategory',
         'propertyLabel',
         'total_views_count', // TAMBAHAN: Untuk menyimpan total view (denormalisasi)
-        // 'view_statistics' // JANGAN tambahkan ini ke fillable jika di-generate oleh accessor
+        'bookmarkedBy', // TAMBAHAN: Array untuk menyimpan ID user yang mem-bookmark
     ];
 
-    protected $guarded = [];
+    // protected $guarded = []; // fillable sudah cukup
 
     protected $casts = [
         'image' => 'array',
@@ -44,6 +44,9 @@ class UserProperty extends Model
         'sizeMin' => 'float',
         'status' => 'string',
         'total_views_count' => 'integer', // TAMBAHAN
+        // 'bookmarkedBy' => 'array', // TAMBAHAN: Casting untuk bookmarkedBy
+        'submissionDate' => 'datetime', // Jika Anda punya field ini
+        'approvalDate' => 'datetime',   // Jika Anda punya field ini
     ];
 
     // Relasi ke User (pemilik properti)
@@ -56,6 +59,23 @@ class UserProperty extends Model
     public function views()
     {
         return $this->hasMany(PropertyView::class, 'property_id', '_id');
+    }
+
+    // Accessor untuk menambahkan 'is_favorited_by_user' ke model saat diambil
+    protected $appends = ['is_favorited_by_user'];
+
+    public function getIsFavoritedByUserAttribute()
+    {
+        if (auth('api')->check()) {
+            $bookmarkedByArray = $this->bookmarkedBy ?? [];
+            if (!is_array($bookmarkedByArray)) { // Safety check
+                Log::warning("UserProperty Model: bookmarkedBy is not an array in getIsFavoritedByUserAttribute for property ID {$this->id}. Type: " . gettype($bookmarkedByArray));
+                $decoded = json_decode((string)$bookmarkedByArray, true);
+                $bookmarkedByArray = is_array($decoded) ? $decoded : [];
+            }
+            return in_array((string) auth('api')->id(), $bookmarkedByArray);
+        }
+        return false;
     }
 
     // Jika Anda memilih untuk TIDAK menggunakan endpoint API statistik terpisah,

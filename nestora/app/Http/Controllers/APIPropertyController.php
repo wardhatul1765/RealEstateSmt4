@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use MongoDB\BSON\UTCDateTime;
+use Illuminate\Support\Facades\Auth;
 
 class APIPropertyController extends Controller
 {
@@ -554,4 +555,95 @@ class APIPropertyController extends Controller
             return response()->json(['success' => false, 'message' => "Failed to delete property ID {$id}. Please check server logs."], 500);
         }
     }
+
+    // === METHOD BARU UNTUK BOOKMARK ===
+    public function toggleBookmark(Request $request, $id) // $id adalah _id properti
+    {
+        $user = Auth::guard('api')->user();
+        if (!$user) {
+            Log::error('ToggleBookmark: Unauthorized access attempt. User not authenticated.');
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        try {
+            $property = UserProperty::findOrFail($id);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error("ToggleBookmark: Property with ID '{$id}' not found in database.");
+            return response()->json(['success' => false, 'message' => 'Property not found'], 404);
+        }
+
+        $userIdString = (string) $user->id;
+
+        $currentBookmarksArray = $property->bookmarkedBy ?? [];
+        // Tambahkan pengecekan eksplisit jika $property->bookmarkedBy tidak langsung array
+        if (!is_array($currentBookmarksArray)) {
+            Log::warning("ToggleBookmark: bookmarkedBy for property '{$id}' was not an array. Attempting json_decode if it's a string.");
+            $decoded = json_decode((string)$currentBookmarksArray, true);
+            $currentBookmarksArray = is_array($decoded) ? $decoded : [];
+        }
+
+        Log::info("ToggleBookmark: User '{$userIdString}' for property '{$id}'. Current bookmarkedBy (after potential decode): " . json_encode($currentBookmarksArray));
+
+        $wasFavorited = in_array($userIdString, $currentBookmarksArray);
+        $isFavoritedNow = false;
+        $newBookmarks = $currentBookmarksArray;
+
+        if ($wasFavorited) {
+            Log::info("ToggleBookmark: User '{$userIdString}' IS IN current bookmarkedBy. Action: Removing.");
+            $newBookmarks = array_values(array_filter($currentBookmarksArray, function ($uid) use ($userIdString) {
+                return (string) $uid !== $userIdString;
+            }));
+            $message = 'Properti dihapus dari bookmark.';
+            $isFavoritedNow = false;
+        } else {
+            Log::info("ToggleBookmark: User '{$userIdString}' IS NOT IN current bookmarkedBy. Action: Adding.");
+            if (!in_array($userIdString, $newBookmarks)) {
+                 $newBookmarks[] = $userIdString;
+            }
+            $message = 'Properti ditambahkan ke bookmark.';
+            $isFavoritedNow = true;
+        }
+
+        $property->bookmarkedBy = $newBookmarks;
+        Log::info("ToggleBookmark: Model's bookmarkedBy attribute set to (before save): " . json_encode($property->bookmarkedBy));
+
+        try {
+            $property->save();
+            Log::info("ToggleBookmark: Property '{$id}' successfully SAVED to database.");
+        } catch (\Exception $e) {
+            Log::error("ToggleBookmark: FAILED to save property '{$id}' to database.", [
+                'error_message' => $e->getMessage(),
+            ]);
+            return response()->json(['success' => false, 'message' => 'Gagal menyimpan status bookmark ke database.'], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => ['is_favorited' => $isFavoritedNow]
+        ]);
+    }
+
+    public function getBookmarkedProperties(Request $request)
+    {
+        $user = Auth::guard('api')->user();
+        if (!$user) {
+            Log::warning('GetBookmarkedProperties: Unauthorized access attempt.');
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $userIdToQuery = (string) $user->id; // Pastikan ID user adalah string
+        Log::info("GetBookmarkedProperties: Fetching bookmarks for User ID (string): '{$userIdToQuery}'");
+
+        // Query ini akan mencari properti di mana $userIdToQuery adalah salah satu elemen dalam array bookmarkedBy
+        $propertiesPaginated = UserProperty::where('bookmarkedBy', $userIdToQuery)
+                                      ->with('owner') // Eager load data pemilik
+                                      ->latest() // Urutkan berdasarkan terbaru
+                                      ->paginate($request->input('limit', 20)); // Paginasi
+
+        Log::info("GetBookmarkedProperties: Found " . $propertiesPaginated->total() . " bookmarked properties for user '{$userIdToQuery}'.");
+
+        return response()->json(['success' => true, 'data' => $propertiesPaginated]);
+    }
+    // === AKHIR METHOD BOOKMARK ===
 }

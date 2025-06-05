@@ -45,6 +45,11 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/predict-price', [PredictionController::class, 'predictPrice']);
     // +++ TAMBAHKAN ROUTE BARU INI UNTUK DELETE +++
     Route::delete('/properties/{id}', [APIPropertyController::class, 'destroy']);
+
+    // === ROUTE BARU UNTUK BOOKMARK ===
+    Route::post('/properties/{id}/toggle-bookmark', [APIPropertyController::class, 'toggleBookmark']);
+    Route::get('/bookmarks', [APIPropertyController::class, 'getBookmarkedProperties']);
+    // === AKHIR ROUTE BOOKMARK ===
 });
 
 Route::post('/forgot-password', [ApiForgotPasswordController::class, 'sendResetCodeEmail']);
