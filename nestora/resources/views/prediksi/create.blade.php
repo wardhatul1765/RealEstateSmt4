@@ -5,9 +5,9 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-0">
         {{-- Hapus 'max-w-4xl' dan 'mx-auto' agar mengisi lebar, tapi pertahankan padding --}}
-        <div class="sm:px-6 lg:px-8">
+        <!-- <div class="sm:px-6 lg:px-8"> -->
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6 sm:p-8 text-gray-900 dark:text-gray-100">
 

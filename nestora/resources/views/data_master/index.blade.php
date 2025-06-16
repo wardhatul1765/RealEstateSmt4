@@ -6,8 +6,8 @@
     </x-slot>
 
     {{-- Lingkup Data Alpine.js untuk halaman ini --}}
-    <div class="py-6" x-data="masterProperti()">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-0" x-data="masterProperti()">
+        <!-- <div class="max-w-7xl mx-auto sm:px-6 lg:px-8"> -->
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6">
 
                 {{-- Notifikasi Bawaan Laravel (Session) --}}
