@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\dashboardcontroller;
 use App\Http\Controllers\DataMasterController;
 use App\Http\Controllers\DataUserController;
 use App\Http\Controllers\PredictionController;
