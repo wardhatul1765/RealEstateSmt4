@@ -42,7 +42,7 @@ Route::middleware('auth:api')->group(function () {
     // Route BARU untuk statistik (hanya untuk user terautentikasi & pemilik)
     Route::get('/properties/{id}/statistics', [APIPropertyController::class, 'getPropertyViewStatistics']);
 
-    Route::post('/predict-price', [PredictionController::class, 'predictPrice']);
+Route::post('/predict', [PredictionController::class, 'predictPriceApi']);
     // +++ TAMBAHKAN ROUTE BARU INI UNTUK DELETE +++
     Route::delete('/properties/{id}', [APIPropertyController::class, 'destroy']);
 
